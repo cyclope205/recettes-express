@@ -10,6 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.storage import Store
 
+from .categorize import guess_category, is_valid_category
 from .const import (
     DEFAULT_EXPIRING_SOON_DAYS,
     SIGNAL_STOCK_UPDATED,
@@ -65,6 +66,9 @@ class StockManager:
             expiration_date = item.get("expiration_date")
             if not isinstance(expiration_date, str) or not expiration_date:
                 expiration_date = None
+            category = item.get("category")
+            if not isinstance(category, str) or not is_valid_category(category):
+                category = guess_category(name)
             items[item_id] = {
                 "id": item.get("id", item_id),
                 "name": name,
@@ -72,6 +76,7 @@ class StockManager:
                 "unit": unit,
                 "expiration_date": expiration_date,
                 "added_at": item.get("added_at"),
+                "category": category,
             }
 
         if len(items) != len(raw_items):
@@ -119,14 +124,20 @@ class StockManager:
         quantity: float,
         unit: str,
         expiration_date: str,
+        category: str | None = None,
     ) -> str:
         """Ajoute un aliment au stock et retourne son identifiant.
 
         La DLC est obligatoire (voir ADD_ITEM_SCHEMA cote __init__.py) : le
         principe du projet est de prioriser l'anti-gaspi par date de
         peremption, ce qui ne fonctionne que si chaque aliment en a une.
+
+        La categorie est optionnelle : si absente ou invalide, elle est
+        devinee automatiquement a partir du nom (voir categorize.py).
         """
         item_id = uuid.uuid4().hex[:8]
+        if not category or not is_valid_category(category):
+            category = guess_category(name)
         self._items[item_id] = {
             "id": item_id,
             "name": name,
@@ -134,6 +145,7 @@ class StockManager:
             "unit": unit,
             "expiration_date": expiration_date,
             "added_at": datetime.now().isoformat(),
+            "category": category,
         }
         await self._async_save()
         _LOGGER.debug("Aliment ajoute au stock: %s", self._items[item_id])
@@ -146,6 +158,7 @@ class StockManager:
             quantity: float | None = None,
             unit: str | None = None,
             expiration_date: str | None = None,
+            category: str | None = None,
         ) -> bool:
         """Met a jour un aliment existant. Retourne False si introuvable."""
         if item_id not in self._items:
@@ -159,6 +172,8 @@ class StockManager:
             item["unit"] = unit
         if expiration_date is not None:
             item["expiration_date"] = expiration_date
+        if category is not None and is_valid_category(category):
+            item["category"] = category
         await self._async_save()
         _LOGGER.debug("Aliment mis a jour: %s", item)
         return True
