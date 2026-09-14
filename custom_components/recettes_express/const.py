@@ -24,6 +24,27 @@ SUGGESTIONS_STORAGE_KEY = "recettes_du_frigo.last_suggestions"
 # Nombre de jours pour considerer un aliment "bientot perime"
 DEFAULT_EXPIRING_SOON_DAYS = 3
 
+# Categories pour le classement automatique des aliments dans la carte
+# (voir categorize.py). DEFAULT_CATEGORY est le repli quand aucun mot-cle
+# ne correspond.
+CATEGORIES = [
+    "fruits_legumes",
+    "viandes_poissons",
+    "produits_laitiers",
+    "boissons",
+    "epicerie",
+    "autres",
+]
+CATEGORY_LABELS = {
+    "fruits_legumes": "Fruits & légumes",
+    "viandes_poissons": "Viandes & poissons",
+    "produits_laitiers": "Produits laitiers",
+    "boissons": "Boissons",
+    "epicerie": "Épicerie",
+    "autres": "Autres",
+}
+DEFAULT_CATEGORY = "autres"
+
 # --- Services ---
 SERVICE_ADD_ITEM = "add_item"
 SERVICE_REMOVE_ITEM = "remove_item"
@@ -39,6 +60,7 @@ ATTR_NAME = "name"
 ATTR_QUANTITY = "quantity"
 ATTR_UNIT = "unit"
 ATTR_EXPIRATION_DATE = "expiration_date"
+ATTR_CATEGORY = "category"
 ATTR_IMAGE_PATH = "image_path"
 ATTR_IMAGE_BASE64 = "image_base64"
 ATTR_CAMERA_ENTITY_ID = "camera_entity_id"
