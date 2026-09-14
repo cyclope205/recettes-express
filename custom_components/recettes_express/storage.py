@@ -91,7 +91,31 @@ class StockManager:
         _LOGGER.debug("Aliment ajoute au stock: %s", self._items[item_id])
         return item_id
 
-    async def async_remove_item(self, item_id: str) -> bool:
+    async def async_update_item(
+            self,
+            item_id: str,
+            name: str | None = None,
+            quantity: float | None = None,
+            unit: str | None = None,
+            expiration_date: str | None = None,
+        ) -> bool:
+        """Met a jour un aliment existant. Retourne False si introuvable."""
+        if item_id not in self._items:
+            return False
+        item = self._items[item_id]
+        if name is not None:
+            item["name"] = name
+        if quantity is not None:
+            item["quantity"] = quantity
+        if unit is not None:
+            item["unit"] = unit
+        if expiration_date is not None:
+            item["expiration_date"] = expiration_date
+        await self._async_save()
+        _LOGGER.debug("Aliment mis a jour: %s", item)
+        return True
+
+        async def async_remove_item(self, item_id: str) -> bool:
         """Supprime un aliment du stock. Retourne False si introuvable."""
         if item_id not in self._items:
             return False
