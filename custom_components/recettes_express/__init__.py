@@ -16,7 +16,14 @@ except ImportError:  # Home Assistant anterieur a 2024.7
     StaticPathConfig = None
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
-from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse
+from homeassistant.core import (
+    CoreState,
+    EVENT_HOMEASSISTANT_STARTED,
+    HomeAssistant,
+    ServiceCall,
+    ServiceResponse,
+    SupportsResponse,
+)
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.event import async_call_later
@@ -120,14 +127,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     _async_register_services(hass, entry)
 
-    try:
-        await _async_register_frontend_card(hass)
-    except Exception:  # pylint: disable=broad-except
-        _LOGGER.exception(
-            "Impossible d'enregistrer automatiquement la carte Lovelace "
-            "(l'integration reste fonctionnelle, mais il faudra l'ajouter "
-            "manuellement en ressource)"
-        )
+    async def _setup_frontend(_event=None) -> None:
+        try:
+            await _async_register_frontend_card(hass)
+        except Exception:  # pylint: disable=broad-except
+            _LOGGER.exception(
+                "Impossible d'enregistrer automatiquement la carte Lovelace "
+                "(l'integration reste fonctionnelle, mais il faudra l'ajouter "
+                "manuellement en ressource)"
+            )
+
+    if hass.state == CoreState.running:
+        await _setup_frontend()
+    else:
+        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _setup_frontend)
 
     return True
 
@@ -157,17 +170,6 @@ async def _async_register_frontend_card(hass: HomeAssistant) -> None:
     except AttributeError:
         hass.http.register_static_path(CARD_URL_PATH, str(www_path), cache_headers=True)
 
-    # add_extra_js_url injecte le <script type="module"> dans index.html : c'est
-    # la seule methode qui marche des le tout premier chargement (avant meme
-    # qu'une ressource Lovelace en stockage existe), mais le navigateur ne la
-    # reevalue qu'au rechargement complet de la page. On l'appelle donc
-    # systematiquement, en plus (et pas en secours) de l'enregistrement comme
-    # vraie ressource Lovelace ci-dessous : si add_extra_js_url perd la course
-    # contre la construction de la vue au premier chargement, la ressource
-    # Lovelace donne une seconde chance a chaque connexion de vue/tableau de
-    # bord, sans attendre un rechargement complet.
-    frontend.add_extra_js_url(hass, js_url)
-
     hass.data[DOMAIN]["_frontend_registered"] = True
     hass.data[DOMAIN]["_card_js_url"] = js_url
     await _async_sync_lovelace_resource(hass)
@@ -175,11 +177,34 @@ async def _async_register_frontend_card(hass: HomeAssistant) -> None:
 
 
 async def _async_sync_lovelace_resource(hass: HomeAssistant, _now=None) -> None:
-    """Enregistre la carte comme une vraie ressource Lovelace, en plus de add_extra_js_url.
+    """Enregistre la carte comme une vraie ressource Lovelace (la methode normale).
 
-    Cette double registration est volontaire (voir le commentaire dans
-    _async_register_frontend_card) : elle donne une seconde chance au
-    navigateur d'enregistrer le custom element sans rechargement complet.
+    C'est deliberement le SEUL chemin de chargement utilise quand il reussit.
+    Toute autre carte custom bien ecrite (installee via HACS) est chargee
+    exactement ainsi : comme une simple ressource Lovelace que le bootstrap
+    du tableau de bord attend explicitement avant de construire la moindre
+    vue. C'est cet "attend" qui protege ces cartes de l'erreur "Custom
+    element doesn't exist".
+
+    add_extra_js_url() injecte au contraire un <script type="module"> brut
+    dans index.html, qui ne fait PAS partie de cette liste de ressources
+    attendue : le tableau de bord peut commencer a construire ses cartes
+    avant qu'il ne se resolve. Appeler les deux pour la meme URL (comme le
+    faisait une version anterieure de cette integration) laissait parfois
+    le navigateur enregistrer le module via ce chemin non attendu,
+    desactivant silencieusement cette protection pour cette carte - d'ou
+    les erreurs "Custom element doesn't exist" en apparence aleatoires vues
+    par certains utilisateurs, alors meme que le fichier se chargeait
+    correctement (pas de 404, pas d'erreur console). add_extra_js_url n'est
+    desormais utilise QU'en secours ci-dessous, quand la vraie ressource ne
+    peut pas etre enregistree du tout (tableaux de bord en mode YAML).
+
+    Si Lovelace lui-meme n'est pas encore pret (hass.data["lovelace"] pas
+    encore rempli - une course au demarrage), on reessaie toutes les 5
+    secondes indefiniment, car Lovelace finit toujours par se charger. Les
+    tableaux de bord en mode YAML (pas de `resources.async_create_item`)
+    sont un etat permanent, pas une course, donc ce cas bascule une seule
+    fois vers add_extra_js_url au lieu de reessayer indefiniment.
     """
     js_url = hass.data[DOMAIN]["_card_js_url"]
     lovelace_data = hass.data.get("lovelace")
@@ -190,10 +215,15 @@ async def _async_sync_lovelace_resource(hass: HomeAssistant, _now=None) -> None:
         return
 
     if not hasattr(resources, "async_create_item"):
-        _LOGGER.debug(
-            "Les ressources Lovelace sont en mode YAML ; la carte reste "
-            "servie via add_extra_js_url uniquement."
+        _LOGGER.warning(
+            "Les ressources Lovelace sont en mode YAML ; la carte ne peut "
+            "pas etre enregistree automatiquement comme une vraie "
+            "ressource. Bascule sur add_extra_js_url (fonctionne, mais "
+            "perd la protection d'ordre de chargement des autres cartes "
+            "custom - envisagez d'ajouter la ressource a la main dans "
+            "votre configuration YAML)."
         )
+        frontend.add_extra_js_url(hass, js_url)
         return
 
     try:
@@ -213,11 +243,14 @@ async def _async_sync_lovelace_resource(hass: HomeAssistant, _now=None) -> None:
         elif existing.get("url") != js_url:
             await resources.async_update_item(existing["id"], {"url": js_url})
     except Exception:  # noqa: BLE001
-        _LOGGER.debug(
+        _LOGGER.warning(
             "Impossible d'enregistrer automatiquement la ressource Lovelace "
-            "pour la carte ; add_extra_js_url reste actif.",
+            "pour la carte ; bascule sur add_extra_js_url (fonctionne, mais "
+            "perd la protection d'ordre de chargement des autres cartes "
+            "custom).",
             exc_info=True,
         )
+        frontend.add_extra_js_url(hass, js_url)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
