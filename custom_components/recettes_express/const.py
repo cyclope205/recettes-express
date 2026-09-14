@@ -22,6 +22,7 @@ DEFAULT_EXPIRING_SOON_DAYS = 3
 # --- Services ---
 SERVICE_ADD_ITEM = "add_item"
 SERVICE_REMOVE_ITEM = "remove_item"
+SERVICE_UPDATE_ITEM = "update_item"
 SERVICE_ADD_ITEM_FROM_PHOTO = "add_item_from_photo"
 SERVICE_SUGGEST_RECIPES = "suggest_recipes"
 SERVICE_ACCEPT_RECIPE = "accept_recipe"
