@@ -7,8 +7,22 @@
 
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-cyclope205-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/cyclope205)
 [![PayPal](https://img.shields.io/badge/PayPal-Donate-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://paypal.me/cyclope205)
+<img src="custom_components/recettes_express/brand/icon.png" alt="Recettes Express" width="32">
 
 Integration Home Assistant pour gerer le stock d'aliments (frigo, garde-manger) et obtenir des suggestions de recettes anti-gaspi generees par IA (Gemini), avec deduction automatique du stock.
+
+
+## Captures d’ecran
+
+---
+Accueil et aliments a suivre :
+
+<img width="460" alt="Recettes Express - accueil" src="screenshots/screenshot-1789401938611-0cf3af6e.png" />
+
+---
+Suggestion de recette generee par IA :
+
+<img width="415" alt="Recettes Express - suggestion de recette" src="screenshots/screenshot-1789401958207-2c11c636.png" />
 
 ## Fonctionnalites
 
