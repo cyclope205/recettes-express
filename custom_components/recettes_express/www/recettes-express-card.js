@@ -25,6 +25,10 @@ class RecettesExpressCard extends HTMLElement {
     this._stockOpen = true;
     this._selectedItemIds = new Set();
     this._capturingPhoto = false;
+    this._stockFilter = "";
+    this._stockSort = "expiration";
+    this._editingItemId = null;
+    this._editItem = { name: "", quantity: 1, unit: "piece", expiration_date: "" };
     this._render();
   }
 
@@ -407,7 +411,89 @@ class RecettesExpressCard extends HTMLElement {
     }
   }
 
-  _getEntityItems(entityId) {
+  _filterAndSortStockItems(items) {
+    let result = items;
+    if (this._stockFilter && this._stockFilter.trim()) {
+      const q = this._stockFilter.trim().toLowerCase();
+      result = result.filter((item) => item.name.toLowerCase().includes(q));
+    }
+    result = result.slice();
+    if (this._stockSort === "name") {
+      result.sort((a, b) => a.name.localeCompare(b.name));
+    } else {
+      result.sort((a, b) => (a.expiration_date || "9999-99-99").localeCompare(b.expiration_date || "9999-99-99"));
+    }
+    return result;
+  }
+
+  _startEditItem(item) {
+    this._editingItemId = item.id;
+    this._editItem = {
+      name: item.name,
+      quantity: item.quantity,
+      unit: item.unit,
+      expiration_date: item.expiration_date || "",
+    };
+    this._render();
+  }
+
+  _cancelEditItem() {
+    this._editingItemId = null;
+    this._render();
+  }
+
+  _updateEditField(field, value) {
+    this._editItem[field] = value;
+  }
+
+  async _saveEditItem() {
+    const edit = this._editItem;
+    if (!edit.name || !edit.name.trim()) {
+      this._setError("Le nom de l'aliment est vide.");
+      return;
+    }
+    if (!edit.expiration_date) {
+      this._setError("La date de peremption est obligatoire.");
+      return;
+    }
+    try {
+      await this._callService("update_item", {
+        item_id: this._editingItemId,
+        name: edit.name.trim(),
+        quantity: parseFloat(edit.quantity) || 1,
+        unit: edit.unit,
+        expiration_date: edit.expiration_date,
+      });
+      this._editingItemId = null;
+      this._error = null;
+      this._render();
+    } catch (err) {
+      this._setError("Erreur modification : " + this._describeError(err));
+    }
+  }
+
+  _renderStockEditRow(item) {
+    const edit = this._editItem;
+    return `
+    <div class="pending-row stock-edit-row">
+      <input type="text" class="edit-name" value="${edit.name}" placeholder="Nom de l'aliment" />
+      <div class="pending-row-line2">
+        <input type="number" step="0.1" class="edit-qty" value="${edit.quantity}" />
+        <select class="edit-unit">
+          ${["g", "kg", "ml", "l", "piece", "boite", "paquet"]
+            .map((u) => `<option value="${u}" ${u === edit.unit ? "selected" : ""}>${u}</option>`)
+            .join("")}
+        </select>
+        <input type="date" class="edit-exp" value="${edit.expiration_date}" required />
+        <div class="pending-actions">
+          <button class="confirm-btn" id="save-edit-btn" title="Enregistrer">✓</button>
+          <button class="discard-btn" id="cancel-edit-btn" title="Annuler">✕</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+    _getEntityItems(entityId) {
     const state = this._hass && this._hass.states[entityId];
     if (!state) return null;
     return state.attributes.items || [];
@@ -426,33 +512,37 @@ class RecettesExpressCard extends HTMLElement {
     }
     const open = this._stockOpen;
     const allSelected = items.length > 0 && items.every((item) => this._selectedItemIds.has(item.id));
+    const displayItems = this._filterAndSortStockItems(items);
     const rows =
-      items.length === 0
-        ? `<p class="empty-hint">Rien pour l'instant — ajoutez un aliment par photo ou manuellement ci-dessous.</p>`
-        : items
-            .map(
-              (item) => `
-        <div class="stock-row">
-          <input
-            type="checkbox"
-            class="item-select-checkbox"
-            data-item-id="${item.id}"
-            ${this._selectedItemIds.has(item.id) ? "checked" : ""}
-            title="Selectionner pour une suggestion de recette"
-          />
-          <div class="stock-row-main">
-            <span class="stock-name">${item.name}</span>
-            <span class="stock-qty">${item.quantity} ${item.unit}</span>
-          </div>
-          <div class="stock-row-side">
-            ${
-              item.expiration_date
-                ? `<span class="badge ${this._expiryBadgeClass(item.expiration_date)}">${item.expiration_date}</span>`
-                : ""
-            }
-            <button class="icon-btn remove-item-btn" data-item-id="${item.id}" data-item-name="${item.name}" title="Retirer">✕</button>
-          </div>
-        </div>`
+      displayItems.length === 0
+        ? `<p class="empty-hint">${this._stockFilter ? "Aucun aliment ne correspond a la recherche." : "Rien ici pour le moment, ajoutez un aliment par photo ou manuellement ci-dessous."}</p>`
+        : displayItems
+            .map((item) =>
+              this._editingItemId === item.id
+                ? this._renderStockEditRow(item)
+                : `
+    <div class="stock-row">
+    <input
+    type="checkbox"
+    class="item-select-checkbox"
+    data-item-id="${item.id}"
+    ${this._selectedItemIds.has(item.id) ? "checked" : ""}
+    title="Selectionner pour une suggestion de recette"
+    />
+    <div class="stock-row-main">
+    <span class="stock-name">${item.name}</span>
+    <span class="stock-qty">${item.quantity} ${item.unit}</span>
+    </div>
+    <div class="stock-row-side">
+    ${
+    item.expiration_date
+    ? `<span class="badge ${this._expiryBadgeClass(item.expiration_date)}">${item.expiration_date}</span>`
+    : ""
+    }
+    <button class="icon-btn edit-item-btn" data-item-id="${item.id}" title="Modifier">✏️</button>
+    <button class="icon-btn remove-item-btn" data-item-id="${item.id}" data-item-name="${item.name}" title="Retirer">✕</button>
+    </div>
+    </div>`
             )
             .join("");
 
@@ -471,6 +561,14 @@ class RecettesExpressCard extends HTMLElement {
               : ""
           }
         </div>
+        ${
+        items.length > 0
+          ? `<div class="stock-toolbar">
+        <input type="text" class="stock-filter-input" id="stock-filter-input" placeholder="Rechercher..." value="${this._stockFilter}" />
+        <button class="sort-toggle-btn" id="sort-toggle-btn" title="Changer le tri">${this._stockSort === "name" ? "🔤 A-Z" : "📅 DLC"}</button>
+        </div>`
+          : ""
+        }
         <div class="stock-card-body ${open ? "" : "collapsed"}">${rows}</div>
       </div>`;
   }
@@ -811,6 +909,10 @@ class RecettesExpressCard extends HTMLElement {
         .chevron.open { transform: rotate(180deg); }
 
         .stock-card-body { padding: 4px 14px 12px 14px; max-height: 420px; overflow-y: auto; }
+.stock-toolbar { display: flex; gap: 8px; padding: 4px 14px 8px 14px; align-items: center; }
+.stock-filter-input { flex: 1; padding: 7px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.05); color: var(--primary-text-color); font: inherit; font-size: 0.85em; box-sizing: border-box; }
+.sort-toggle-btn { flex-shrink: 0; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); color: var(--secondary-text-color); border-radius: 999px; padding: 6px 11px; font-size: 0.78em; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.sort-toggle-btn:hover { background: rgba(255,255,255,0.13); color: var(--primary-text-color); }
         .stock-card-body.collapsed { display: none; }
 
         .stock-row {
@@ -1200,6 +1302,41 @@ class RecettesExpressCard extends HTMLElement {
         this._removeItem(e.currentTarget.dataset.itemId, e.currentTarget.dataset.itemName)
       );
     });
+    root.querySelectorAll(".edit-item-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        const itemId = e.currentTarget.dataset.itemId;
+        const item = (this._lastStockItems || []).find((i) => i.id === itemId);
+        if (item) this._startEditItem(item);
+      });
+    });
+
+    const editNameEl = root.querySelector(".edit-name");
+    if (editNameEl) editNameEl.addEventListener("input", (e) => this._updateEditField("name", e.target.value));
+    const editQtyEl = root.querySelector(".edit-qty");
+    if (editQtyEl) editQtyEl.addEventListener("input", (e) => this._updateEditField("quantity", e.target.value));
+    const editUnitEl = root.querySelector(".edit-unit");
+    if (editUnitEl) editUnitEl.addEventListener("change", (e) => this._updateEditField("unit", e.target.value));
+    const editExpEl = root.querySelector(".edit-exp");
+    if (editExpEl) editExpEl.addEventListener("input", (e) => this._updateEditField("expiration_date", e.target.value));
+    const saveEditBtn = root.getElementById("save-edit-btn");
+    if (saveEditBtn) saveEditBtn.addEventListener("click", () => this._saveEditItem());
+    const cancelEditBtn = root.getElementById("cancel-edit-btn");
+    if (cancelEditBtn) cancelEditBtn.addEventListener("click", () => this._cancelEditItem());
+
+    const stockFilterInput = root.getElementById("stock-filter-input");
+    if (stockFilterInput) {
+      stockFilterInput.addEventListener("input", (e) => {
+        this._stockFilter = e.target.value;
+        this._render();
+      });
+    }
+    const sortToggleBtn = root.getElementById("sort-toggle-btn");
+    if (sortToggleBtn) {
+      sortToggleBtn.addEventListener("click", () => {
+        this._stockSort = this._stockSort === "name" ? "expiration" : "name";
+        this._render();
+      });
+    }
 
     root.querySelectorAll(".pending-name").forEach((el) =>
       el.addEventListener("input", (e) => this._updatePendingField(+e.target.dataset.index, "name", e.target.value))
