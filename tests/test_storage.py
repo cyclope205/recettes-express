@@ -273,3 +273,90 @@ def test_suggestions_store_async_set_persists_and_updates_get():
     run(store.async_set([{"title": "Soupe"}]))
     assert store.get() == [{"title": "Soupe"}]
     store._store.async_save.assert_awaited_with({"recipes": [{"title": "Soupe"}]})
+
+
+# --- category handling --------------------------------------------------
+
+
+def test_async_add_item_without_category_guesses_one():
+    manager = _make_manager()
+    item_id = run(manager.async_add_item("Tomate", 3, "piece", "2026-01-01"))
+    items = manager.get_items_by_ids([item_id])
+    assert items[0]["category"] == "fruits_legumes"
+
+
+def test_async_add_item_with_valid_category_keeps_it():
+    manager = _make_manager()
+    item_id = run(
+        manager.async_add_item("Truc bizarre", 1, "piece", "2026-01-01", category="epicerie")
+    )
+    items = manager.get_items_by_ids([item_id])
+    assert items[0]["category"] == "epicerie"
+
+
+def test_async_add_item_with_invalid_category_falls_back_to_guess():
+    manager = _make_manager()
+    item_id = run(
+        manager.async_add_item("Tomate", 1, "piece", "2026-01-01", category="pas-une-categorie")
+    )
+    items = manager.get_items_by_ids([item_id])
+    assert items[0]["category"] == "fruits_legumes"
+
+
+def test_async_update_item_can_correct_category():
+    manager = _make_manager()
+    item_id = run(manager.async_add_item("Truc", 1, "piece", "2026-01-01"))
+    ok = run(manager.async_update_item(item_id, category="epicerie"))
+    assert ok is True
+    items = manager.get_items_by_ids([item_id])
+    assert items[0]["category"] == "epicerie"
+
+
+def test_async_update_item_ignores_invalid_category():
+    manager = _make_manager()
+    item_id = run(manager.async_add_item("Tomate", 1, "piece", "2026-01-01"))
+    run(manager.async_update_item(item_id, category="pas-une-categorie"))
+    items = manager.get_items_by_ids([item_id])
+    assert items[0]["category"] == "fruits_legumes"
+
+
+def test_async_load_missing_category_is_guessed_from_name():
+    # Retrocompatibilite : les aliments enregistres avant l'ajout de la
+    # categorisation n'ont pas de champ "category" dans le stockage.
+    manager = _make_manager()
+    manager._store.async_load = AsyncMock(return_value={
+        "items": {"abc": {"id": "abc", "name": "Tomate", "quantity": 1, "unit": "piece"}}
+    })
+    run(manager.async_load())
+    items = manager.get_items()
+    assert items[0]["category"] == "fruits_legumes"
+
+
+def test_async_load_invalid_stored_category_is_reguessed():
+    manager = _make_manager()
+    manager._store.async_load = AsyncMock(return_value={
+        "items": {
+            "abc": {
+                "id": "abc", "name": "Tomate", "quantity": 1, "unit": "piece",
+                "category": "pas-une-categorie",
+            }
+        }
+    })
+    run(manager.async_load())
+    items = manager.get_items()
+    assert items[0]["category"] == "fruits_legumes"
+
+
+def test_async_load_valid_stored_category_is_kept():
+    manager = _make_manager()
+    manager._store.async_load = AsyncMock(return_value={
+        "items": {
+            "abc": {
+                "id": "abc", "name": "Truc bizarre", "quantity": 1, "unit": "piece",
+                "category": "epicerie",
+            }
+        }
+    })
+    run(manager.async_load())
+    items = manager.get_items()
+    assert items[0]["category"] == "epicerie"
