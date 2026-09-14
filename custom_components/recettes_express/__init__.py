@@ -254,7 +254,7 @@ def _async_register_services(hass: HomeAssistant, entry: ConfigEntry) -> None:
         if not updated:
             raise HomeAssistantError(f"Aliment {call.data[ATTR_ITEM_ID]} introuvable")
 
-        async def handle_add_item_from_photo(call: ServiceCall) -> ServiceResponse:
+    async def handle_add_item_from_photo(call: ServiceCall) -> ServiceResponse:
         data = _get_entry_data(hass)
         gemini: GeminiClient = data["gemini"]
 
