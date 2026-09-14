@@ -384,6 +384,7 @@ class RecettesExpressCard extends HTMLElement {
       const removedCount = (result && result.response && result.response.removed_count) || 0;
       recipe._accepted = true;
       recipe._removedCount = removedCount;
+      this._recipes = this._recipes.filter((r) => r === recipe);
       this._selectedItemIds.clear();
       this._error = null;
       this._render();
