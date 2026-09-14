@@ -46,7 +46,7 @@ from .const import (
     UNITS,
 )
 from .gemini_client import GeminiClient, GeminiError
-from .storage import StockManager
+from .storage import StockManager, SuggestionsStore
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -105,10 +105,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     gemini = GeminiClient(hass, entry.data[CONF_GEMINI_API_KEY])
 
+    suggestions_store = SuggestionsStore(hass)
+    await suggestions_store.async_load()
+
     hass.data[DOMAIN][entry.entry_id] = {
         "stock": stock,
         "gemini": gemini,
-        DATA_LAST_SUGGESTIONS: [],
+        DATA_LAST_SUGGESTIONS: suggestions_store,
     }
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
@@ -349,13 +352,13 @@ def _async_register_services(hass: HomeAssistant, entry: ConfigEntry) -> None:
         except GeminiError as err:
             raise HomeAssistantError(f"Suggestion de recettes impossible: {err}") from err
 
-        data[DATA_LAST_SUGGESTIONS] = recipes
+        await data[DATA_LAST_SUGGESTIONS].async_set(recipes)
         return {"recipes": recipes}
 
     async def handle_accept_recipe(call: ServiceCall) -> ServiceResponse:
         data = _get_entry_data(hass)
         stock: StockManager = data["stock"]
-        suggestions = data.get(DATA_LAST_SUGGESTIONS, [])
+        suggestions = data[DATA_LAST_SUGGESTIONS].get()
 
         index = call.data[ATTR_RECIPE_INDEX]
         if index < 0 or index >= len(suggestions):
