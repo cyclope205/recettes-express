@@ -5,6 +5,7 @@ from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN, SIGNAL_STOCK_UPDATED
@@ -50,6 +51,12 @@ class StockCountSensor(_PushUpdatedSensor):
         self._stock = stock
         self._attr_name = "Aliments"
         self._attr_unique_id = f"{entry.entry_id}_count"
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, entry.entry_id)},
+            name="Recettes Express",
+            manufacturer="Recettes Express",
+            model="Suivi de stock",
+        )
 
     @property
     def native_value(self) -> int:
@@ -69,6 +76,12 @@ class ExpiringSoonSensor(_PushUpdatedSensor):
         self._stock = stock
         self._attr_name = "Bientot perime"
         self._attr_unique_id = f"{entry.entry_id}_expiring_soon"
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, entry.entry_id)},
+            name="Recettes Express",
+            manufacturer="Recettes Express",
+            model="Suivi de stock",
+        )
 
     @property
     def native_value(self) -> int:
