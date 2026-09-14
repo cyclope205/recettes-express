@@ -218,7 +218,25 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Decharge l'entree de configuration."""
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
-        hass.data[DOMAIN].pop(entry.entry_id)
+        hass.data[DOMAIN].pop(entry.entry_id, None)
+        remaining_entries = [
+            key
+            for key in hass.data[DOMAIN]
+            if isinstance(key, str) and not key.startswith("_")
+        ]
+        if not remaining_entries:
+            # Une seule entree de configuration est possible (unique_id fixe
+            # dans config_flow.py) : si elle est dechargee, plus personne
+            # n'a besoin des services enregistres au niveau du domaine.
+            for service in (
+                SERVICE_ADD_ITEM,
+                SERVICE_REMOVE_ITEM,
+                SERVICE_UPDATE_ITEM,
+                SERVICE_ADD_ITEM_FROM_PHOTO,
+                SERVICE_SUGGEST_RECIPES,
+                SERVICE_ACCEPT_RECIPE,
+            ):
+                hass.services.async_remove(DOMAIN, service)
     return unload_ok
 
 
