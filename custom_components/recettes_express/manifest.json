@@ -2,11 +2,11 @@
     "domain": "recettes_express",
     "name": "Recettes Express",
     "codeowners": ["@cyclope205"],
-    "dependencies": ["http"],
     "config_flow": true,
+    "dependencies": ["http"],
     "documentation": "https://github.com/cyclope205/recettes-express",
-    "issue_tracker": "https://github.com/cyclope205/recettes-express/issues",
     "iot_class": "cloud_polling",
+    "issue_tracker": "https://github.com/cyclope205/recettes-express/issues",
     "requirements": [],
     "version": "1.9.0"
 }
