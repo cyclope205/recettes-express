@@ -357,7 +357,8 @@ class RecettesExpressCard extends HTMLElement {
         true
       );
       const removedCount = (result && result.response && result.response.removed_count) || 0;
-      this._recipes = [];
+      recipe._accepted = true;
+      recipe._removedCount = removedCount;
       this._selectedItemIds.clear();
       this._error = null;
       this._render();
@@ -370,6 +371,11 @@ class RecettesExpressCard extends HTMLElement {
     } catch (err) {
       this._setError("Erreur validation recette : " + this._describeError(err));
     }
+  }
+
+  _finishRecipe(index) {
+    this._recipes.splice(index, 1);
+    this._render();
   }
 
   _toggleStockSection() {
@@ -672,12 +678,17 @@ class RecettesExpressCard extends HTMLElement {
     const cards = this._recipes
       .map(
         (recipe, i) => `
-        <div class="recipe-card">
+        <div class="recipe-card ${recipe._accepted ? "recipe-card-done" : ""}">
           <div class="recipe-title">${recipe.title}${recipe.prep_minutes ? ` <span class="recipe-time">⏱️ ${recipe.prep_minutes} min</span>` : ""}</div>
           <ol class="recipe-steps">
             ${(recipe.steps || []).map((s) => `<li>${s}</li>`).join("")}
           </ol>
-          <button class="accept-recipe-btn" data-index="${i}">✓ Valider cette recette</button>
+          ${
+        recipe._accepted
+          ? `<p class="recipe-done-hint">Ingredients retires du stock (${recipe._removedCount || 0}).</p>
+      <button class="finish-recipe-btn" data-index="${i}">Recette terminee</button>`
+          : `<button class="accept-recipe-btn" data-index="${i}">✓ Valider cette recette</button>`
+      }
         </div>`
       )
       .join("");
@@ -1137,6 +1148,20 @@ class RecettesExpressCard extends HTMLElement {
         }
         .accept-recipe-btn:hover { filter: brightness(1.08); }
         .accept-recipe-btn:active { transform: scale(0.96); }
+        .recipe-card-done { opacity: 0.85; }
+        .recipe-done-hint { margin: 0 0 10px 0; font-size: 0.88em; font-weight: 600; color: var(--secondary-text-color); }
+        .finish-recipe-btn {
+          background: transparent;
+          color: var(--secondary-text-color);
+          border: 1px solid var(--divider-color, rgba(255,255,255,0.2));
+          border-radius: 999px;
+          padding: 8px 14px;
+          cursor: pointer;
+          font-weight: 700;
+          font-size: 0.9em;
+        }
+        .finish-recipe-btn:hover { filter: brightness(1.15); }
+        .finish-recipe-btn:active { transform: scale(0.96); }
       </style>
       <ha-card>
         <div class="card-header">
@@ -1369,6 +1394,9 @@ class RecettesExpressCard extends HTMLElement {
     );
     root.querySelectorAll(".accept-recipe-btn").forEach((btn) =>
       btn.addEventListener("click", (e) => this._acceptRecipe(+e.currentTarget.dataset.index))
+    );
+    root.querySelectorAll(".finish-recipe-btn").forEach((btn) =>
+      btn.addEventListener("click", (e) => this._finishRecipe(+e.currentTarget.dataset.index))
     );
   }
 }
