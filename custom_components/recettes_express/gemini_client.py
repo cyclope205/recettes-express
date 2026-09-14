@@ -10,7 +10,7 @@ from typing import Any
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.core import HomeAssistant
 
-from .const import GEMINI_API_BASE, GEMINI_TEXT_MODEL, GEMINI_VISION_MODEL
+from .const import GEMINI_API_BASE, GEMINI_TEXT_MODEL, GEMINI_VISION_MODEL, UNITS
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -101,9 +101,119 @@ def _extract_json(text: str) -> dict[str, Any]:
         if cleaned.lower().startswith("json"):
             cleaned = cleaned[4:]
     try:
-        return json.loads(cleaned)
+        parsed = json.loads(cleaned)
     except json.JSONDecodeError as err:
         raise GeminiError(f"Reponse Gemini non-JSON: {err}") from err
+    if not isinstance(parsed, dict):
+        raise GeminiError(f"Reponse Gemini n'est pas un objet JSON: {parsed!r}")
+    return parsed
+
+
+def _coerce_str(value: Any, default: str = "") -> str:
+    """Convertit une valeur JSON quelconque en chaine, sans jamais lever."""
+    if isinstance(value, str):
+        return value.strip()
+    if value is None:
+        return default
+    return str(value).strip()
+
+
+def _coerce_number(value: Any, default: float = 1.0) -> float:
+    """Convertit une valeur JSON quelconque en nombre, sans jamais lever."""
+    if isinstance(value, bool):
+        return default
+    if isinstance(value, (int, float)):
+        return value
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _normalize_detected_items(raw: Any) -> list[dict[str, Any]]:
+    """Valide et normalise les aliments detectes par Gemini.
+
+    Gemini est un LLM : rien ne garantit que sa reponse respecte le schema
+    demande dans le prompt (champ manquant, mauvais type, unite invalide...).
+    On ne fait jamais confiance aveuglement au JSON recu - chaque entree est
+    validee et normalisee, ou ignoree si elle n'est pas exploitable, plutot
+    que de laisser une donnee incorrecte remonter jusqu'au stock ou a la carte.
+    """
+    if not isinstance(raw, list):
+        _LOGGER.warning("Reponse Gemini 'items' inattendue (pas une liste): %r", raw)
+        return []
+
+    items: list[dict[str, Any]] = []
+    for entry in raw:
+        if not isinstance(entry, dict):
+            continue
+        name = _coerce_str(entry.get("name"))
+        if not name:
+            continue
+        unit = _coerce_str(entry.get("unit"), "piece")
+        if unit not in UNITS:
+            unit = "piece"
+        expiration_date = entry.get("expiration_date")
+        if not isinstance(expiration_date, str) or not expiration_date.strip():
+            expiration_date = None
+        items.append(
+            {
+                "name": name,
+                "quantity": _coerce_number(entry.get("quantity"), 1.0),
+                "unit": unit,
+                "expiration_date": expiration_date,
+            }
+        )
+    return items
+
+
+def _normalize_recipes(
+    raw: Any, valid_item_ids: set[str] | None = None
+) -> list[dict[str, Any]]:
+    """Valide et normalise les recettes proposees par Gemini.
+
+    En plus de la validation de type (meme raison que _normalize_detected_items),
+    filtre used_item_ids pour ne garder que des identifiants qui existent
+    vraiment dans le stock fourni : une seconde barriere, cote code cette
+    fois (en plus de la regle dans le prompt), contre un ingredient invente
+    qui se retrouverait quand meme dans la reponse.
+    """
+    if not isinstance(raw, list):
+        _LOGGER.warning("Reponse Gemini 'recipes' inattendue (pas une liste): %r", raw)
+        return []
+
+    recipes: list[dict[str, Any]] = []
+    for entry in raw:
+        if not isinstance(entry, dict):
+            continue
+        title = _coerce_str(entry.get("title"))
+        if not title:
+            continue
+        used_ids_raw = entry.get("used_item_ids")
+        used_ids = (
+            [str(i) for i in used_ids_raw if isinstance(i, (str, int)) and not isinstance(i, bool)]
+            if isinstance(used_ids_raw, list)
+            else []
+        )
+        if valid_item_ids is not None:
+            used_ids = [i for i in used_ids if i in valid_item_ids]
+        steps_raw = entry.get("steps")
+        steps = (
+            [s for s in (_coerce_str(step) for step in steps_raw) if s]
+            if isinstance(steps_raw, list)
+            else []
+        )
+        if not steps:
+            continue
+        recipes.append(
+            {
+                "title": title,
+                "used_item_ids": used_ids,
+                "prep_minutes": _coerce_number(entry.get("prep_minutes"), 0),
+                "steps": steps,
+            }
+        )
+    return recipes
 
 
 class GeminiClient:
@@ -168,7 +278,7 @@ class GeminiClient:
         # raisonnement multi-etapes.
         text = await self._generate(GEMINI_VISION_MODEL, parts, thinking_level="minimal")
         result = _extract_json(text)
-        return result.get("items", [])
+        return _normalize_detected_items(result.get("items"))
 
     async def suggest_recipes(
         self, stock_items: list[dict[str, Any]], max_recipes: int = 3
@@ -183,4 +293,7 @@ class GeminiClient:
         prompt = RECIPE_PROMPT_TEMPLATE.format(stock_list=stock_list, max_recipes=max_recipes)
         text = await self._generate(GEMINI_TEXT_MODEL, [{"text": prompt}], thinking_level="low")
         result = _extract_json(text)
-        return result.get("recipes", [])
+        valid_ids = {
+            str(i["id"]) for i in stock_items if isinstance(i, dict) and "id" in i
+        }
+        return _normalize_recipes(result.get("recipes"), valid_ids)
