@@ -16,6 +16,11 @@ UNITS = ["g", "kg", "ml", "l", "piece", "boite", "paquet"]
 STORAGE_KEY = "recettes_du_frigo.stock"
 STORAGE_VERSION = 1
 
+# Cle du fichier de stockage des dernieres recettes suggerees, pour
+# qu'elles survivent a un redemarrage de Home Assistant (accept_recipe
+# dependait auparavant d'un etat uniquement en memoire).
+SUGGESTIONS_STORAGE_KEY = "recettes_du_frigo.last_suggestions"
+
 # Nombre de jours pour considerer un aliment "bientot perime"
 DEFAULT_EXPIRING_SOON_DAYS = 3
 
