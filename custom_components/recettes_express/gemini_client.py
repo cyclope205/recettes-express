@@ -121,7 +121,6 @@ class GeminiClient:
         payload = {
             "contents": [{"parts": parts}],
             "generationConfig": {
-                "temperature": 0.2,
                 # "minimal"/"low" reduit la latence sur des taches directes
                 # (extraction, classement) qui ne demandent pas un
                 # raisonnement multi-etapes - voir gemini_client.recognize_food.
