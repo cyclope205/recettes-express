@@ -97,7 +97,13 @@ def test_normalize_detected_items_valid_entry():
         {"name": "Tomate", "quantity": 3, "unit": "piece", "expiration_date": "2026-01-01"}
     ])
     assert items == [
-        {"name": "Tomate", "quantity": 3, "unit": "piece", "expiration_date": "2026-01-01"}
+        {
+            "name": "Tomate",
+            "quantity": 3,
+            "unit": "piece",
+            "expiration_date": "2026-01-01",
+            "category": "fruits_legumes",
+        }
     ]
 
 
