@@ -1,0 +1,93 @@
+add_item:
+  name: Ajouter un aliment
+  description: Ajoute manuellement un aliment au stock.
+  fields:
+    name:
+      name: Nom
+      required: true
+      selector:
+        text:
+    quantity:
+      name: Quantite
+      required: true
+      selector:
+        number:
+          min: 0
+          step: 0.1
+          mode: box
+    unit:
+      name: Unite
+      required: true
+      selector:
+        select:
+          options: ["g", "kg", "ml", "l", "piece", "boite", "paquet"]
+    expiration_date:
+      name: Date de peremption
+      description: Obligatoire (voir le principe anti-gaspi du projet).
+      required: true
+      selector:
+        date:
+
+remove_item:
+  name: Retirer un aliment
+  description: Supprime un aliment du stock par son identifiant.
+  fields:
+    item_id:
+      name: Identifiant
+      required: true
+      selector:
+        text:
+
+add_item_from_photo:
+  name: Ajouter par photo
+  description: >
+    Analyse une photo via Gemini et retourne les aliments detectes pour
+    confirmation. N'ajoute rien automatiquement au stock.
+  fields:
+    image_path:
+      name: Chemin de l'image
+      required: false
+      selector:
+        text:
+    image_base64:
+      name: Image (base64)
+      required: false
+      selector:
+        text:
+    camera_entity_id:
+      name: Camera
+      required: false
+      selector:
+        entity:
+          domain: camera
+
+suggest_recipes:
+  name: Suggerer des recettes
+  description: Demande a Gemini de proposer des recettes a partir du stock actuel.
+  fields:
+    item_ids:
+      name: Aliments selectionnes
+      required: false
+      selector:
+        object:
+    max_recipes:
+      name: Nombre de recettes
+      required: false
+      selector:
+        number:
+          min: 1
+          max: 5
+          step: 1
+          mode: box
+
+accept_recipe:
+  name: Valider une recette
+  description: Valide une recette et retire les ingredients utilises du stock.
+  fields:
+    recipe_index:
+      name: Index de la recette
+      required: true
+      selector:
+        number:
+          min: 0
+          mode: box
