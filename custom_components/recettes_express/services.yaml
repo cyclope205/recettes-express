@@ -38,6 +38,40 @@ remove_item:
       selector:
         text:
 
+update_item:
+  name: Modifier un aliment
+  description: Modifie un aliment existant du stock (nom, quantite, unite ou date de peremption).
+  fields:
+    item_id:
+      name: Identifiant
+      required: true
+      selector:
+        text:
+    name:
+      name: Nom
+      required: false
+      selector:
+        text:
+    quantity:
+      name: Quantite
+      required: false
+      selector:
+        number:
+          min: 0
+          step: 0.1
+          mode: box
+    unit:
+      name: Unite
+      required: false
+      selector:
+        select:
+          options: ["g", "kg", "ml", "l", "piece", "boite", "paquet"]
+    expiration_date:
+      name: Date de peremption
+      required: false
+      selector:
+        date:
+
 add_item_from_photo:
   name: Ajouter par photo
   description: >
