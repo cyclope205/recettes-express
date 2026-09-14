@@ -1,7 +1,5 @@
 {
-    "name": "Recettes du Frigo",
+    "name": "Recettes Express",
     "content_in_root": false,
-    "render_readme": true,
-    "zip_release": false,
-    "filename": "recettes_du_frigo.zip"
+    "render_readme": true
 }
