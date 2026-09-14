@@ -1460,9 +1460,10 @@ return result;
     const manualUnit = root.getElementById("manual-unit");
     if (manualUnit) manualUnit.addEventListener("change", (e) => this._updateManualField("unit", e.target.value));
     const manualExp = root.getElementById("manual-exp");
-    if (manualExp) manualExp.addEventListener("change", (e) => {
-      e.target.blur();
+    if (manualExp) manualExp.addEventListener("input", (e) => {
       this._updateManualField("expiration_date", e.target.value);
+      clearTimeout(e.target._dlcBlurTimer);
+      e.target._dlcBlurTimer = setTimeout(() => e.target.blur(), 600);
     });
     const manualQuickDate = root.getElementById("manual-quick-date");
     if (manualQuickDate) {
@@ -1506,9 +1507,10 @@ return result;
     const editUnitEl = root.querySelector(".edit-unit");
     if (editUnitEl) editUnitEl.addEventListener("change", (e) => this._updateEditField("unit", e.target.value));
     const editExpEl = root.querySelector(".edit-exp");
-    if (editExpEl) editExpEl.addEventListener("change", (e) => {
-      e.target.blur();
+    if (editExpEl) editExpEl.addEventListener("input", (e) => {
       this._updateEditField("expiration_date", e.target.value);
+      clearTimeout(e.target._dlcBlurTimer);
+      e.target._dlcBlurTimer = setTimeout(() => e.target.blur(), 600);
     });
     const saveEditBtn = root.getElementById("save-edit-btn");
     if (saveEditBtn) saveEditBtn.addEventListener("click", () => this._saveEditItem());
@@ -1540,10 +1542,11 @@ return result;
       el.addEventListener("change", (e) => this._updatePendingField(+e.target.dataset.index, "unit", e.target.value))
     );
     root.querySelectorAll(".pending-exp").forEach((el) =>
-      el.addEventListener("change", (e) => {
-        e.target.blur();
+      el.addEventListener("input", (e) => {
         this._updatePendingField(+e.target.dataset.index, "expiration_date", e.target.value);
-        this._render();
+        e.target.classList.toggle("field-missing", !e.target.value);
+        clearTimeout(e.target._dlcBlurTimer);
+        e.target._dlcBlurTimer = setTimeout(() => e.target.blur(), 600);
       })
     );
     root.querySelectorAll(".pending-quick-date").forEach((el) =>
