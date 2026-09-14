@@ -17,16 +17,9 @@ from .const import CATEGORIES, DEFAULT_CATEGORY
 # L'ordre des categories determine la priorite en cas de mot-cle ambigu
 # (ex. "lait" est dans produits_laitiers, pas boissons, car verifie avant).
 _KEYWORDS: dict[str, list[str]] = {
-    "fruits_legumes": [
-        "pomme", "poire", "banane", "orange", "citron", "fraise", "framboise",
-        "raisin", "peche", "abricot", "prune", "cerise", "melon", "pasteque",
-        "kiwi", "mangue", "ananas", "avocat", "tomate", "carotte", "courgette",
-        "aubergine", "poivron", "concombre", "salade", "laitue", "epinard",
-        "brocoli", "chou", "haricot", "petit pois", "pomme de terre", "patate",
-        "oignon", "ail", "echalote", "poireau", "champignon", "betterave",
-        "radis", "navet", "celeri", "fenouil", "artichaut", "asperge",
-        "courge", "potiron", "citrouille", "persil", "basilic", "coriandre",
-        "ciboulette", "menthe", "gingembre",
+    "boissons": [
+        "eau", "jus", "soda", "the", "cafe", "vin", "biere", "limonade",
+        "sirop", "smoothie", "cidre", "champagne", "tisane",
     ],
     "viandes_poissons": [
         "poulet", "boeuf", "porc", "agneau", "veau", "dinde", "canard",
@@ -42,9 +35,16 @@ _KEYWORDS: dict[str, list[str]] = {
         "feta", "cheddar", "camembert", "brie", "ricotta", "mascarpone",
         "petit suisse",
     ],
-    "boissons": [
-        "eau", "jus", "soda", "the", "cafe", "vin", "biere", "limonade",
-        "sirop", "smoothie", "cidre", "champagne", "tisane",
+    "fruits_legumes": [
+        "pomme", "poire", "banane", "orange", "citron", "fraise", "framboise",
+        "raisin", "peche", "abricot", "prune", "cerise", "melon", "pasteque",
+        "kiwi", "mangue", "ananas", "avocat", "tomate", "carotte", "courgette",
+        "aubergine", "poivron", "concombre", "salade", "laitue", "epinard",
+        "brocoli", "chou", "haricot", "petit pois", "pomme de terre", "patate",
+        "oignon", "ail", "echalote", "poireau", "champignon", "betterave",
+        "radis", "navet", "celeri", "fenouil", "artichaut", "asperge",
+        "courge", "potiron", "citrouille", "persil", "basilic", "coriandre",
+        "ciboulette", "menthe", "gingembre",
     ],
     "epicerie": [
         "riz", "pates", "pate", "farine", "sucre", "sel", "poivre", "huile",
