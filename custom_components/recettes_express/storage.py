@@ -15,6 +15,7 @@ from .const import (
     SIGNAL_STOCK_UPDATED,
     STORAGE_KEY,
     STORAGE_VERSION,
+    SUGGESTIONS_STORAGE_KEY,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -29,9 +30,56 @@ class StockManager:
         self._items: dict[str, dict[str, Any]] = {}
 
     async def async_load(self) -> None:
-        """Charge le stock depuis le disque."""
+        """Charge le stock depuis le disque.
+
+        Le fichier de stockage n'est pas garanti d'etre dans le format
+        attendu (ancienne version, edition manuelle, corruption disque...).
+        On valide chaque entree plutot que de faire confiance aveuglement
+        au contenu charge : une entree invalide est ignoree (avec un
+        avertissement) au lieu de planter ou de propager des donnees
+        incoherentes au reste de l'integration.
+        """
         data = await self._store.async_load()
-        self._items = data.get("items", {}) if data else {}
+        raw_items = data.get("items") if isinstance(data, dict) else None
+        if not isinstance(raw_items, dict):
+            if data is not None:
+                _LOGGER.warning(
+                    "Stock enregistre dans un format inattendu ; demarrage avec un stock vide."
+                )
+            self._items = {}
+            return
+
+        items: dict[str, dict[str, Any]] = {}
+        for item_id, item in raw_items.items():
+            if not isinstance(item_id, str) or not isinstance(item, dict):
+                continue
+            name = item.get("name")
+            unit = item.get("unit")
+            if not isinstance(name, str) or not name:
+                continue
+            if not isinstance(unit, str) or not unit:
+                continue
+            quantity = item.get("quantity")
+            if not isinstance(quantity, (int, float)) or isinstance(quantity, bool):
+                quantity = 1
+            expiration_date = item.get("expiration_date")
+            if not isinstance(expiration_date, str) or not expiration_date:
+                expiration_date = None
+            items[item_id] = {
+                "id": item.get("id", item_id),
+                "name": name,
+                "quantity": quantity,
+                "unit": unit,
+                "expiration_date": expiration_date,
+                "added_at": item.get("added_at"),
+            }
+
+        if len(items) != len(raw_items):
+            _LOGGER.warning(
+                "%d entree(s) du stock ignorees au chargement (format invalide).",
+                len(raw_items) - len(items),
+            )
+        self._items = items
 
     async def _async_save(self) -> None:
         await self._store.async_save({"items": self._items})
@@ -122,3 +170,33 @@ class StockManager:
         del self._items[item_id]
         await self._async_save()
         return True
+
+
+
+class SuggestionsStore:
+    """Persiste les dernieres recettes suggerees par Gemini.
+
+    Sans cela, accept_recipe dependait uniquement d'une liste gardee en
+    memoire (hass.data) : un redemarrage de Home Assistant entre une
+    suggestion et sa validation faisait perdre les recettes proposees,
+    obligeant a relancer un appel Gemini pour rien.
+    """
+
+    def __init__(self, hass: HomeAssistant) -> None:
+        self._store: Store = Store(hass, STORAGE_VERSION, SUGGESTIONS_STORAGE_KEY)
+        self._recipes: list[dict[str, Any]] = []
+
+    async def async_load(self) -> None:
+        """Charge les dernieres suggestions depuis le disque."""
+        data = await self._store.async_load()
+        recipes = data.get("recipes") if isinstance(data, dict) else None
+        self._recipes = recipes if isinstance(recipes, list) else []
+
+    def get(self) -> list[dict[str, Any]]:
+        """Retourne les dernieres recettes suggerees (liste vide si aucune)."""
+        return self._recipes
+
+    async def async_set(self, recipes: list[dict[str, Any]]) -> None:
+        """Remplace et persiste les dernieres recettes suggerees."""
+        self._recipes = recipes
+        await self._store.async_save({"recipes": recipes})
