@@ -46,7 +46,7 @@ quantite et leur date de peremption quand elle est connue :
 
 REGLE ABSOLUE (la plus importante de toutes) : tu ne dois utiliser ET ne mentionner, ni dans
 "used_item_ids" ni dans le texte des "steps", AUCUN aliment absent de la liste ci-dessus, a
-la seule exception de ces bases de cuisine courantes : sel, poivre, sucre, epices, huile, beurre,
+la seule exception de ces bases de cuisine courantes : sel, poivre, sucre, epices, huile,
 eau, farine. N'ajoute JAMAIS d'autres ingredients (par exemple : ail, oignon, fromage,
 creme, herbes fraiches, bouillon, citron, sauce soja...) meme si la recette serait meilleure
 avec, sauf s'ils figurent explicitement dans la liste ci-dessus.
