@@ -9,6 +9,16 @@
  *   entity_expiring: sensor.bientot_perime
  */
 
+const CATEGORY_LABELS = {
+  fruits_legumes: "🍎 Fruits & légumes",
+  viandes_poissons: "🥩 Viandes & poissons",
+  produits_laitiers: "🥛 Produits laitiers",
+  boissons: "🥤 Boissons",
+  epicerie: "🥫 Épicerie",
+  autres: "📦 Autres",
+};
+const CATEGORY_ORDER = Object.keys(CATEGORY_LABELS);
+
 class RecettesExpressCard extends HTMLElement {
   setConfig(config) {
     this._config = {
@@ -563,14 +573,10 @@ return result;
     const open = this._stockOpen;
     const allSelected = items.length > 0 && items.every((item) => this._selectedItemIds.has(item.id));
     const displayItems = this._filterAndSortStockItems(items);
-    const rows =
-      displayItems.length === 0
-        ? `<p class="empty-hint">${this._stockFilter ? "Aucun aliment ne correspond a la recherche." : "Rien ici pour le moment, ajoutez un aliment par photo ou manuellement ci-dessous."}</p>`
-        : displayItems
-            .map((item) =>
-              this._editingItemId === item.id
-                ? this._renderStockEditRow(item)
-                : `
+    const renderItemRow = (item) =>
+      this._editingItemId === item.id
+        ? this._renderStockEditRow(item)
+        : `
     <div class="stock-row">
     <input
     type="checkbox"
@@ -592,8 +598,17 @@ return result;
     <button class="icon-btn edit-item-btn" data-item-id="${item.id}" title="Modifier">✏️</button>
     <button class="icon-btn remove-item-btn" data-item-id="${item.id}" data-item-name="${this._escapeHtml(item.name)}" title="Retirer">✕</button>
     </div>
-    </div>`
-            )
+    </div>`;
+    const rows =
+      displayItems.length === 0
+        ? `<p class="empty-hint">${this._stockFilter ? "Aucun aliment ne correspond a la recherche." : "Rien ici pour le moment, ajoutez un aliment par photo ou manuellement ci-dessous."}</p>`
+        : CATEGORY_ORDER
+            .map((cat) => {
+              const group = displayItems.filter((item) => (item.category || "autres") === cat);
+              if (group.length === 0) return "";
+              const label = CATEGORY_LABELS[cat] || cat;
+              return `<div class="category-header">${label} <span class="category-count">${group.length}</span></div>` + group.map(renderItemRow).join("");
+            })
             .join("");
 
     return `
@@ -999,6 +1014,22 @@ return result;
 .sort-toggle-btn:hover { background: rgba(255,255,255,0.13); color: var(--primary-text-color); }
         .stock-card-body.collapsed { display: none; }
 
+        .category-header {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 14px 0 6px;
+          font-size: 0.85em;
+          font-weight: 600;
+          opacity: 0.75;
+          text-transform: uppercase;
+          letter-spacing: 0.02em;
+        }
+        .category-header:first-child { padding-top: 4px; }
+        .category-count {
+          font-weight: 400;
+          opacity: 0.7;
+        }
         .stock-row {
           display: flex;
           align-items: center;
