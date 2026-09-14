@@ -31,7 +31,7 @@ _KEYWORDS: dict[str, list[str]] = {
     ],
     "produits_laitiers": [
         "lait", "yaourt", "yogourt", "fromage", "creme", "beurre",
-        "parmesan", "mozzarella", "emmental", "gruyere", "comte", "chevre",
+        "parmesan", "parmigiano", "chaussee aux moines", "mozzarella", "emmental", "gruyere", "comte", "chevre",
         "feta", "cheddar", "camembert", "brie", "ricotta", "mascarpone",
         "petit suisse",
     ],
