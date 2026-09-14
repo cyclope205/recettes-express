@@ -1356,6 +1356,7 @@ return result;
 
           ${this._renderPendingItems()}
           ${this._renderManualForm()}
+          ${this._renderRecipes()}
           ${
             this._error
               ? `<div class="error-banner"><span>${this._error}</span><button id="dismiss-error">✕</button></div>`
@@ -1364,9 +1365,6 @@ return result;
           ${this._renderExpiringBanner(expiringItems)}
 
           ${this._renderStockSection(stockItems)}
-
-          
-          ${this._renderRecipes()}
         </div>
       </ha-card>
     `;
@@ -1463,7 +1461,10 @@ return result;
     const manualUnit = root.getElementById("manual-unit");
     if (manualUnit) manualUnit.addEventListener("change", (e) => this._updateManualField("unit", e.target.value));
     const manualExp = root.getElementById("manual-exp");
-    if (manualExp) manualExp.addEventListener("input", (e) => this._updateManualField("expiration_date", e.target.value));
+    if (manualExp) manualExp.addEventListener("change", (e) => {
+      e.target.blur();
+      this._updateManualField("expiration_date", e.target.value);
+    });
     const manualQuickDate = root.getElementById("manual-quick-date");
     if (manualQuickDate) {
       manualQuickDate.addEventListener("change", (e) => {
@@ -1506,7 +1507,10 @@ return result;
     const editUnitEl = root.querySelector(".edit-unit");
     if (editUnitEl) editUnitEl.addEventListener("change", (e) => this._updateEditField("unit", e.target.value));
     const editExpEl = root.querySelector(".edit-exp");
-    if (editExpEl) editExpEl.addEventListener("input", (e) => this._updateEditField("expiration_date", e.target.value));
+    if (editExpEl) editExpEl.addEventListener("change", (e) => {
+      e.target.blur();
+      this._updateEditField("expiration_date", e.target.value);
+    });
     const saveEditBtn = root.getElementById("save-edit-btn");
     if (saveEditBtn) saveEditBtn.addEventListener("click", () => this._saveEditItem());
     const cancelEditBtn = root.getElementById("cancel-edit-btn");
@@ -1537,7 +1541,8 @@ return result;
       el.addEventListener("change", (e) => this._updatePendingField(+e.target.dataset.index, "unit", e.target.value))
     );
     root.querySelectorAll(".pending-exp").forEach((el) =>
-      el.addEventListener("input", (e) => {
+      el.addEventListener("change", (e) => {
+        e.target.blur();
         this._updatePendingField(+e.target.dataset.index, "expiration_date", e.target.value);
         this._render();
       })
