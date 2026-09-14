@@ -27,6 +27,14 @@ add_item:
       required: true
       selector:
         date:
+    category:
+      name: Categorie
+      description: Si absente, devinee automatiquement a partir du nom.
+      required: false
+      selector:
+        select:
+          options: ["fruits_legumes", "viandes_poissons", "produits_laitiers", "boissons", "epicerie", "autres"]
+
 
 remove_item:
   name: Retirer un aliment
@@ -71,6 +79,14 @@ update_item:
       required: false
       selector:
         date:
+    category:
+      name: Categorie
+      description: Si absente, devinee automatiquement a partir du nom.
+      required: false
+      selector:
+        select:
+          options: ["fruits_legumes", "viandes_poissons", "produits_laitiers", "boissons", "epicerie", "autres"]
+
 
 add_item_from_photo:
   name: Ajouter par photo
