@@ -9,7 +9,6 @@ from pathlib import Path
 import voluptuous as vol
 
 from homeassistant.components import frontend
-from homeassistant.components.camera import async_get_image as camera_async_get_image
 
 try:
     from homeassistant.components.http import StaticPathConfig
@@ -316,6 +315,11 @@ def _async_register_services(hass: HomeAssistant, entry: ConfigEntry) -> None:
 
             image_bytes = await hass.async_add_executor_job(_read_file)
         elif camera_entity_id:
+            # Import local : evite de tirer homeassistant.components.camera
+            # (et sa dependance a stream/numpy) au chargement du module entier,
+            # alors que ce n import n'est necessaire que pour cette branche.
+            from homeassistant.components.camera import async_get_image as camera_async_get_image
+
             image = await camera_async_get_image(hass, camera_entity_id)
             image_bytes = image.content
         else:
