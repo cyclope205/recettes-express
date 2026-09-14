@@ -1,0 +1,21 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Recettes Express",
+        "description": "Renseignez votre cle API Gemini pour activer la reconnaissance photo et les suggestions de recettes.\n\n[Creer une cle API Gemini gratuite](https://aistudio.google.com/apikey)",
+        "data": {
+          "gemini_api_key": "Cle API Gemini"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Impossible de contacter l'API Gemini",
+      "invalid_auth": "Cle API invalide",
+      "quota_exceeded": "Quota Gemini gratuit deja atteint aujourd'hui pour ce compte - la cle est probablement valide, reessayez demain ou depuis un autre compte Google"
+    },
+    "abort": {
+      "already_configured": "Recettes Express est deja configure"
+    }
+  }
+}
