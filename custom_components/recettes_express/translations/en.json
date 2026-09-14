@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Recettes Express",
-        "description": "Enter your Gemini API key to enable photo recognition and recipe suggestions.\n\n[Create a free Gemini API key](https://aistudio.google.com/apikey)",
+        "description": "Enter your Gemini API key to enable photo recognition and recipe suggestions. You can create a free one from Google AI Studio.",
         "data": {
           "gemini_api_key": "Gemini API key"
         }
