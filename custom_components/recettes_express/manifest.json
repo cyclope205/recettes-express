@@ -2,6 +2,7 @@
     "domain": "recettes_express",
     "name": "Recettes Express",
     "codeowners": ["@cyclope205"],
+    "dependencies": ["http"],
     "config_flow": true,
     "documentation": "https://github.com/cyclope205/recettes-express",
     "issue_tracker": "https://github.com/cyclope205/recettes-express/issues",
