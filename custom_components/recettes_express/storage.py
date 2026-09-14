@@ -115,7 +115,7 @@ class StockManager:
         _LOGGER.debug("Aliment mis a jour: %s", item)
         return True
 
-        async def async_remove_item(self, item_id: str) -> bool:
+    async def async_remove_item(self, item_id: str) -> bool:
         """Supprime un aliment du stock. Retourne False si introuvable."""
         if item_id not in self._items:
             return False
