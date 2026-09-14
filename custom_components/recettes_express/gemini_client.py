@@ -4,12 +4,15 @@ from __future__ import annotations
 import base64
 import json
 import logging
+import re
+import unicodedata
 from datetime import date
 from typing import Any
 
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.core import HomeAssistant
 
+from .categorize import guess_category, is_valid_category
 from .const import GEMINI_API_BASE, GEMINI_TEXT_MODEL, GEMINI_VISION_MODEL, UNITS
 
 _LOGGER = logging.getLogger(__name__)
@@ -32,11 +35,13 @@ Reponds UNIQUEMENT avec un JSON valide (pas de texte autour, pas de markdown), a
 {{
   "items": [
     {{"name": "nom de l'aliment", "quantity": 1, "unit": "piece",
-     "expiration_date": "YYYY-MM-DD ou null"}}
+     "expiration_date": "YYYY-MM-DD ou null",
+     "category": "une valeur parmi fruits_legumes, viandes_poissons, produits_laitiers, boissons, epicerie, autres"}}
   ]
 }}
 Les unites valides sont: g, kg, ml, l, piece, boite, paquet. Si tu ne peux pas estimer
-la quantite, mets 1 avec l'unite "piece"."""
+la quantite, mets 1 avec l'unite "piece". Pour la categorie, choisis la plus
+appropriee dans la liste ci-dessus ; utilise "autres" si aucune ne convient clairement."""
 
 RECIPE_PROMPT_TEMPLATE = """Tu es un assistant culinaire oriente anti-gaspillage. Voici la
 liste EXHAUSTIVE des aliments actuellement disponibles, avec leur identifiant interne, leur
@@ -46,7 +51,7 @@ quantite et leur date de peremption quand elle est connue :
 
 REGLE ABSOLUE (la plus importante de toutes) : tu ne dois utiliser ET ne mentionner, ni dans
 "used_item_ids" ni dans le texte des "steps", AUCUN aliment absent de la liste ci-dessus, a
-la seule exception de ces bases de cuisine courantes : sel, poivre, sucre, epices, huile,
+la seule exception de ces bases de cuisine courantes : sel, poivre, sucre, epices,
 eau, farine. N'ajoute JAMAIS d'autres ingredients (par exemple : ail, oignon, fromage,
 creme, herbes fraiches, bouillon, citron, sauce soja...) meme si la recette serait meilleure
 avec, sauf s'ils figurent explicitement dans la liste ci-dessus.
@@ -156,27 +161,68 @@ def _normalize_detected_items(raw: Any) -> list[dict[str, Any]]:
         expiration_date = entry.get("expiration_date")
         if not isinstance(expiration_date, str) or not expiration_date.strip():
             expiration_date = None
+        category = entry.get("category")
+        if not isinstance(category, str) or not is_valid_category(category):
+            category = guess_category(name)
         items.append(
             {
                 "name": name,
                 "quantity": _coerce_number(entry.get("quantity"), 1.0),
                 "unit": unit,
                 "expiration_date": expiration_date,
+                "category": category,
             }
         )
     return items
 
 
+def _normalize_text_for_matching(value: str) -> str:
+    """Minuscule et sans accents, pour reperer un mot quel que soit son accent."""
+    normalized = unicodedata.normalize("NFKD", value)
+    return "".join(c for c in normalized if not unicodedata.combining(c)).lower()
+
+
+# Ingredients frequemment "invente" par le modele dans le texte des etapes
+# alors qu'ils sont absents du stock et des bases de cuisine autorisees
+# (voir RECIPE_PROMPT_TEMPLATE) - constate en usage reel (ex: ajout de
+# parmesan ou de vinaigre non demande). Deuxieme barriere cote code : la
+# consigne du prompt seule ne suffit pas toujours a l'empecher.
+_HALLUCINATION_WATCHLIST = [
+    "fromage", "parmesan", "parmigiano", "mozzarella", "gruyere", "emmental",
+    "comte", "chevre", "feta", "cheddar", "creme", "beurre", "ail", "oignon",
+    "echalote", "bouillon", "citron", "vinaigre", "moutarde", "mayonnaise",
+    "miel", "chocolat", "amande", "noix", "olive", "persil", "basilic",
+    "coriandre", "thym", "romarin", "laurier", "ciboulette", "soja", "vin",
+]
+
+
+def _find_hallucinated_ingredients(steps: list[str], stock_names: list[str]) -> list[str]:
+    """Detecte les mots de _HALLUCINATION_WATCHLIST mentionnes dans les etapes
+    mais absents des noms d'aliments du stock fourni."""
+    normalized_stock = _normalize_text_for_matching(" ".join(stock_names))
+    normalized_steps = _normalize_text_for_matching(" ".join(steps))
+    found = []
+    for word in _HALLUCINATION_WATCHLIST:
+        pattern = r"\b" + re.escape(word) + r"\b"
+        if re.search(pattern, normalized_steps) and not re.search(pattern, normalized_stock):
+            found.append(word)
+    return found
+
+
 def _normalize_recipes(
-    raw: Any, valid_item_ids: set[str] | None = None
+    raw: Any,
+    valid_item_ids: set[str] | None = None,
+    stock_names: list[str] | None = None,
 ) -> list[dict[str, Any]]:
     """Valide et normalise les recettes proposees par Gemini.
 
     En plus de la validation de type (meme raison que _normalize_detected_items),
     filtre used_item_ids pour ne garder que des identifiants qui existent
-    vraiment dans le stock fourni : une seconde barriere, cote code cette
-    fois (en plus de la regle dans le prompt), contre un ingredient invente
-    qui se retrouverait quand meme dans la reponse.
+    vraiment dans le stock fourni, et rejette toute recette dont le texte des
+    etapes mentionne un ingredient de _HALLUCINATION_WATCHLIST absent du
+    stock : deux barrieres cote code (en plus de la regle dans le prompt)
+    contre un ingredient invente qui se retrouverait quand meme dans la
+    reponse.
     """
     if not isinstance(raw, list):
         _LOGGER.warning("Reponse Gemini 'recipes' inattendue (pas une liste): %r", raw)
@@ -205,6 +251,16 @@ def _normalize_recipes(
         )
         if not steps:
             continue
+        if stock_names is not None:
+            hallucinated = _find_hallucinated_ingredients(steps, stock_names)
+            if hallucinated:
+                _LOGGER.warning(
+                    "Recette '%s' rejetee : ingredient(s) hors stock detecte(s) dans "
+                    "les etapes (%s)",
+                    title,
+                    ", ".join(hallucinated),
+                )
+                continue
         recipes.append(
             {
                 "title": title,
@@ -296,4 +352,7 @@ class GeminiClient:
         valid_ids = {
             str(i["id"]) for i in stock_items if isinstance(i, dict) and "id" in i
         }
-        return _normalize_recipes(result.get("recipes"), valid_ids)
+        stock_names = [
+            i["name"] for i in stock_items if isinstance(i, dict) and isinstance(i.get("name"), str)
+        ]
+        return _normalize_recipes(result.get("recipes"), valid_ids, stock_names)
