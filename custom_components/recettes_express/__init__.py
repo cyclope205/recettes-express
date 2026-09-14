@@ -23,6 +23,7 @@ from homeassistant.helpers.event import async_call_later
 
 from .const import (
     ATTR_CAMERA_ENTITY_ID,
+    ATTR_CATEGORY,
     ATTR_EXPIRATION_DATE,
     ATTR_IMAGE_BASE64,
     ATTR_IMAGE_PATH,
@@ -33,6 +34,7 @@ from .const import (
     ATTR_QUANTITY,
     ATTR_RECIPE_INDEX,
     ATTR_UNIT,
+    CATEGORIES,
     CONF_GEMINI_API_KEY,
     DATA_LAST_SUGGESTIONS,
     DOMAIN,
@@ -62,6 +64,7 @@ ADD_ITEM_SCHEMA = vol.Schema(
         vol.Required(ATTR_QUANTITY): vol.Coerce(float),
         vol.Required(ATTR_UNIT): vol.In(UNITS),
         vol.Required(ATTR_EXPIRATION_DATE): cv.string,
+        vol.Optional(ATTR_CATEGORY): vol.In(CATEGORIES),
     }
 )
 
@@ -74,6 +77,7 @@ UPDATE_ITEM_SCHEMA = vol.Schema(
         vol.Optional(ATTR_QUANTITY): vol.Coerce(float),
         vol.Optional(ATTR_UNIT): vol.In(UNITS),
         vol.Optional(ATTR_EXPIRATION_DATE): cv.string,
+        vol.Optional(ATTR_CATEGORY): vol.In(CATEGORIES),
     }
 )
 
@@ -265,6 +269,7 @@ def _async_register_services(hass: HomeAssistant, entry: ConfigEntry) -> None:
             quantity=call.data[ATTR_QUANTITY],
             unit=call.data[ATTR_UNIT],
             expiration_date=call.data[ATTR_EXPIRATION_DATE],
+            category=call.data.get(ATTR_CATEGORY),
         )
 
     async def handle_remove_item(call: ServiceCall) -> None:
@@ -283,6 +288,7 @@ def _async_register_services(hass: HomeAssistant, entry: ConfigEntry) -> None:
             quantity=call.data.get(ATTR_QUANTITY),
             unit=call.data.get(ATTR_UNIT),
             expiration_date=call.data.get(ATTR_EXPIRATION_DATE),
+            category=call.data.get(ATTR_CATEGORY),
         )
         if not updated:
             raise HomeAssistantError(f"Aliment {call.data[ATTR_ITEM_ID]} introuvable")
