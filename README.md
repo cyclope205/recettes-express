@@ -25,6 +25,9 @@ Integration Home Assistant pour gerer le stock d'aliments (frigo, garde-manger) 
 
 1. HACS > menu (...) > Depots personnalises
 2. Ajouter `cyclope205/recettes-express` en categorie Integration
+
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=cyclope205&repository=recettes-express&category=integration)
+
 3. Installer "Recettes Express" depuis HACS
 4. Redemarrer Home Assistant
 
@@ -52,3 +55,19 @@ entity_expiring: sensor.bientot_perime
 - `recettes_express.add_item_from_photo` : detecter des aliments a partir d'une photo
 - `recettes_express.suggest_recipes` : demander des suggestions de recettes
 - `recettes_express.accept_recipe` : valider une recette et deduire les ingredients du stock
+
+## Licence
+
+MIT — voir [LICENSE](LICENSE).
+
+<div align="center">
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+### ☕ Cette integration te plait ?
+
+Si elle te fait gagner du temps, un petit don est toujours apprecie : ca m'aide a maintenir le projet et a ajouter de nouvelles fonctionnalites.
+
+<a href="https://buymeacoffee.com/cyclope205"><img src="https://img.shields.io/badge/Buy%20Me%20A%20Coffee-cyclope205-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black" alt="Buy Me A Coffee"></a>
+<a href="https://paypal.me/cyclope205"><img src="https://img.shields.io/badge/PayPal-Donate-00457C?style=for-the-badge&logo=paypal&logoColor=white" alt="PayPal"></a>
+
+</div>
