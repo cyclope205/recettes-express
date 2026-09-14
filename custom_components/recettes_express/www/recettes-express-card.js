@@ -1332,16 +1332,6 @@ return result;
           </div>
         </div>
         <div class="card-content">
-          ${this._renderPendingItems()}
-          ${
-            this._error
-              ? `<div class="error-banner"><span>${this._error}</span><button id="dismiss-error">✕</button></div>`
-              : ""
-          }
-          ${this._renderExpiringBanner(expiringItems)}
-
-          ${this._renderStockSection(stockItems)}
-
           <div class="actions-bar">
             <button class="btn btn-photo" id="photo-btn" ${this._loading === "photo" ? "disabled" : ""}>
               ${this._loading === "photo" ? '<span class="spinner"></span> Analyse…' : "📷 Ajouter par photo"}
@@ -1364,7 +1354,18 @@ return result;
               : ""
           }
 
+          ${this._renderPendingItems()}
           ${this._renderManualForm()}
+          ${
+            this._error
+              ? `<div class="error-banner"><span>${this._error}</span><button id="dismiss-error">✕</button></div>`
+              : ""
+          }
+          ${this._renderExpiringBanner(expiringItems)}
+
+          ${this._renderStockSection(stockItems)}
+
+          
           ${this._renderRecipes()}
         </div>
       </ha-card>
