@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Recettes Express",
-        "description": "Renseignez votre cle API Gemini pour activer la reconnaissance photo et les suggestions de recettes.\n\n[Creer une cle API Gemini gratuite](https://aistudio.google.com/apikey)",
+        "description": "Renseignez votre cle API Gemini pour activer la reconnaissance photo et les suggestions de recettes. Vous pouvez en creer une gratuitement depuis Google AI Studio.",
         "data": {
           "gemini_api_key": "Cle API Gemini"
         }
