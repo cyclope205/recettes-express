@@ -1,0 +1,21 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Recettes Express",
+        "description": "Enter your Gemini API key to enable photo recognition and recipe suggestions.\n\n[Create a free Gemini API key](https://aistudio.google.com/apikey)",
+        "data": {
+          "gemini_api_key": "Gemini API key"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect to the Gemini API",
+      "invalid_auth": "Invalid API key",
+      "quota_exceeded": "Free Gemini quota already reached for today on this account - the key is probably valid, try again tomorrow or with another Google account"
+    },
+    "abort": {
+      "already_configured": "Recettes Express is already configured"
+    }
+  }
+}
