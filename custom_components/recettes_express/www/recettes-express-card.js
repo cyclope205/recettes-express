@@ -223,12 +223,13 @@ class RecettesExpressCard extends HTMLElement {
       if (items.length === 0) {
         this._error = "Aucun aliment detecte sur cette photo.";
       }
-      this._pendingItems = items.map((item) => ({
+      const detectedItems = items.map((item) => ({
         name: item.name || "",
         quantity: item.quantity ?? 1,
         unit: item.unit || "piece",
         expiration_date: item.expiration_date || "",
       }));
+      this._pendingItems = this._pendingItems.concat(detectedItems);
     } catch (err) {
       this._error = "Erreur reconnaissance photo : " + this._describeError(err);
     } finally {
@@ -574,7 +575,7 @@ class RecettesExpressCard extends HTMLElement {
       .map(
         (recipe, i) => `
         <div class="recipe-card">
-          <div class="recipe-title">${recipe.title}</div>
+          <div class="recipe-title">${recipe.title}${recipe.prep_minutes ? ` <span class="recipe-time">⏱️ ${recipe.prep_minutes} min</span>` : ""}</div>
           <ol class="recipe-steps">
             ${(recipe.steps || []).map((s) => `<li>${s}</li>`).join("")}
           </ol>
@@ -1017,6 +1018,7 @@ class RecettesExpressCard extends HTMLElement {
           box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
         }
         .recipe-title { font-weight: 800; margin-bottom: 8px; font-size: 1.02em; }
+.recipe-time { font-size: 0.72em; font-weight: 600; color: var(--secondary-text-color); }
         .recipe-steps { margin: 0 0 12px 0; padding-left: 20px; }
         .recipe-steps li { margin-bottom: 5px; font-size: 0.92em; line-height: 1.4; }
         .accept-recipe-btn {
