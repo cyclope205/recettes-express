@@ -442,6 +442,16 @@ class RecettesExpressCard extends HTMLElement {
     }
   }
 
+  _escapeHtml(value) {
+    if (value === null || value === undefined) return "";
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
   _filterAndSortStockItems(items) {
     let result = items;
     if (this._stockFilter && this._stockFilter.trim()) {
@@ -454,7 +464,15 @@ class RecettesExpressCard extends HTMLElement {
     } else {
       result.sort((a, b) => (a.expiration_date || "9999-99-99").localeCompare(b.expiration_date || "9999-99-99"));
     }
-    return result;
+      if (this._selectedItemIds && this._selectedItemIds.size) {
+    const checked = [];
+    const unchecked = [];
+    result.forEach((item) => {
+      (this._selectedItemIds.has(item.id) ? checked : unchecked).push(item);
+    });
+    result = checked.concat(unchecked);
+  }
+return result;
   }
 
   _startEditItem(item) {
@@ -507,9 +525,9 @@ class RecettesExpressCard extends HTMLElement {
     const edit = this._editItem;
     return `
     <div class="pending-row stock-edit-row">
-      <input type="text" class="edit-name" value="${edit.name}" placeholder="Nom de l'aliment" />
+      <input type="text" class="edit-name" value="${this._escapeHtml(edit.name)}" placeholder="Nom de l'aliment" />
       <div class="pending-row-line2">
-        <input type="number" step="0.1" class="edit-qty" value="${edit.quantity}" />
+        <input type="number" step="0.1" class="edit-qty" value="${this._escapeHtml(edit.quantity)}" />
         <select class="edit-unit">
           ${["g", "kg", "ml", "l", "piece", "boite", "paquet"]
             .map((u) => `<option value="${u}" ${u === edit.unit ? "selected" : ""}>${u}</option>`)
@@ -561,8 +579,8 @@ class RecettesExpressCard extends HTMLElement {
     title="Selectionner pour une suggestion de recette"
     />
     <div class="stock-row-main">
-    <span class="stock-name">${item.name}</span>
-    <span class="stock-qty">${item.quantity} ${item.unit}</span>
+    <span class="stock-name">${this._escapeHtml(item.name)}</span>
+    <span class="stock-qty">${this._escapeHtml(item.quantity)} ${this._escapeHtml(item.unit)}</span>
     </div>
     <div class="stock-row-side">
     ${
@@ -571,7 +589,7 @@ class RecettesExpressCard extends HTMLElement {
     : ""
     }
     <button class="icon-btn edit-item-btn" data-item-id="${item.id}" title="Modifier">✏️</button>
-    <button class="icon-btn remove-item-btn" data-item-id="${item.id}" data-item-name="${item.name}" title="Retirer">✕</button>
+    <button class="icon-btn remove-item-btn" data-item-id="${item.id}" data-item-name="${this._escapeHtml(item.name)}" title="Retirer">✕</button>
     </div>
     </div>`
             )
@@ -613,9 +631,9 @@ class RecettesExpressCard extends HTMLElement {
           <span class="chevron ${this._manualOpen ? "open" : ""}">⌄</span>
         </button>
         <div class="manual-form ${this._manualOpen ? "" : "collapsed"}">
-          <input type="text" id="manual-name" placeholder="Nom de l'aliment" value="${item.name}" />
+          <input type="text" id="manual-name" placeholder="Nom de l'aliment" value="${this._escapeHtml(item.name)}" />
           <div class="manual-row">
-            <input type="number" step="0.1" id="manual-qty" value="${item.quantity}" />
+            <input type="number" step="0.1" id="manual-qty" value="${this._escapeHtml(item.quantity)}" />
             <select id="manual-unit">
               ${["g", "kg", "ml", "l", "piece", "boite", "paquet"]
                 .map((u) => `<option value="${u}" ${u === item.unit ? "selected" : ""}>${u}</option>`)
@@ -643,9 +661,9 @@ class RecettesExpressCard extends HTMLElement {
         const missingDate = !item.expiration_date;
         return `
         <div class="pending-row">
-          <input type="text" class="pending-name" data-index="${i}" value="${item.name}" placeholder="Nom de l'aliment" />
+          <input type="text" class="pending-name" data-index="${i}" value="${this._escapeHtml(item.name)}" placeholder="Nom de l'aliment" />
           <div class="pending-row-line2">
-            <input type="number" step="0.1" class="pending-qty" data-index="${i}" value="${item.quantity}" />
+            <input type="number" step="0.1" class="pending-qty" data-index="${i}" value="${this._escapeHtml(item.quantity)}" />
             <select class="pending-unit" data-index="${i}">
               ${["g", "kg", "ml", "l", "piece", "boite", "paquet"]
                 .map((u) => `<option value="${u}" ${u === item.unit ? "selected" : ""}>${u}</option>`)
@@ -714,7 +732,7 @@ class RecettesExpressCard extends HTMLElement {
         const steps = (recipe.steps || [])
           .map(
             (s, si) => `
-          <li><span class="step-num">${si + 1}</span><span class="step-text">${s}</span></li>`
+          <li><span class="step-num">${si + 1}</span><span class="step-text">${this._escapeHtml(s)}</span></li>`
           )
           .join("");
         return `
@@ -722,7 +740,7 @@ class RecettesExpressCard extends HTMLElement {
           <div class="recipe-hero" style="background: linear-gradient(135deg, ${c1}, ${c2});">
             <span class="recipe-hero-emoji">${emoji}</span>
             <div class="recipe-hero-text">
-              <div class="recipe-title">${recipe.title}</div>
+              <div class="recipe-title">${this._escapeHtml(recipe.title)}</div>
               ${recipe.prep_minutes ? `<span class="recipe-time">⏱️ ${recipe.prep_minutes} min</span>` : ""}
             </div>
           </div>
