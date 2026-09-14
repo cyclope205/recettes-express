@@ -42,6 +42,7 @@ from .const import (
     SERVICE_ADD_ITEM_FROM_PHOTO,
     SERVICE_REMOVE_ITEM,
     SERVICE_SUGGEST_RECIPES,
+    SERVICE_UPDATE_ITEM,
     UNITS,
 )
 from .gemini_client import GeminiClient, GeminiError
@@ -66,6 +67,16 @@ ADD_ITEM_SCHEMA = vol.Schema(
 )
 
 REMOVE_ITEM_SCHEMA = vol.Schema({vol.Required(ATTR_ITEM_ID): cv.string})
+
+UPDATE_ITEM_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_ITEM_ID): cv.string,
+        vol.Optional(ATTR_NAME): cv.string,
+        vol.Optional(ATTR_QUANTITY): vol.Coerce(float),
+        vol.Optional(ATTR_UNIT): vol.In(UNITS),
+        vol.Optional(ATTR_EXPIRATION_DATE): cv.string,
+    }
+)
 
 ADD_ITEM_FROM_PHOTO_SCHEMA = vol.Schema(
     {
@@ -230,7 +241,20 @@ def _async_register_services(hass: HomeAssistant, entry: ConfigEntry) -> None:
         if not removed:
             raise HomeAssistantError(f"Aliment {call.data[ATTR_ITEM_ID]} introuvable")
 
-    async def handle_add_item_from_photo(call: ServiceCall) -> ServiceResponse:
+    async def handle_update_item(call: ServiceCall) -> None:
+        data = _get_entry_data(hass)
+        stock: StockManager = data["stock"]
+        updated = await stock.async_update_item(
+            call.data[ATTR_ITEM_ID],
+            name=call.data.get(ATTR_NAME),
+            quantity=call.data.get(ATTR_QUANTITY),
+            unit=call.data.get(ATTR_UNIT),
+            expiration_date=call.data.get(ATTR_EXPIRATION_DATE),
+        )
+        if not updated:
+            raise HomeAssistantError(f"Aliment {call.data[ATTR_ITEM_ID]} introuvable")
+
+        async def handle_add_item_from_photo(call: ServiceCall) -> ServiceResponse:
         data = _get_entry_data(hass)
         gemini: GeminiClient = data["gemini"]
 
@@ -317,6 +341,9 @@ def _async_register_services(hass: HomeAssistant, entry: ConfigEntry) -> None:
     hass.services.async_register(DOMAIN, SERVICE_ADD_ITEM, handle_add_item, schema=ADD_ITEM_SCHEMA)
     hass.services.async_register(
         DOMAIN, SERVICE_REMOVE_ITEM, handle_remove_item, schema=REMOVE_ITEM_SCHEMA
+    )
+    hass.services.async_register(
+        DOMAIN, SERVICE_UPDATE_ITEM, handle_update_item, schema=UPDATE_ITEM_SCHEMA
     )
     hass.services.async_register(
         DOMAIN,
