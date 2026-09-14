@@ -599,12 +599,18 @@ return result;
     <button class="icon-btn remove-item-btn" data-item-id="${item.id}" data-item-name="${this._escapeHtml(item.name)}" title="Retirer">✕</button>
     </div>
     </div>`;
+    const selectedItems = displayItems.filter((item) => this._selectedItemIds.has(item.id));
+    const unselectedItems = displayItems.filter((item) => !this._selectedItemIds.has(item.id));
+    const selectedSection =
+      selectedItems.length === 0
+        ? ""
+        : `<div class="category-header selected-header">✅ Aliments selectionnes <span class="category-count">${selectedItems.length}</span></div>` + selectedItems.map(renderItemRow).join("");
     const rows =
       displayItems.length === 0
         ? `<p class="empty-hint">${this._stockFilter ? "Aucun aliment ne correspond a la recherche." : "Rien ici pour le moment, ajoutez un aliment par photo ou manuellement ci-dessous."}</p>`
-        : CATEGORY_ORDER
+        : selectedSection + CATEGORY_ORDER
             .map((cat) => {
-              const group = displayItems.filter((item) => (item.category || "autres") === cat);
+              const group = unselectedItems.filter((item) => (item.category || "autres") === cat);
               if (group.length === 0) return "";
               const label = CATEGORY_LABELS[cat] || cat;
               return `<div class="category-header">${label} <span class="category-count">${group.length}</span></div>` + group.map(renderItemRow).join("");
@@ -1026,6 +1032,7 @@ return result;
           letter-spacing: 0.02em;
         }
         .category-header:first-child { padding-top: 4px; }
+        .selected-header { color: var(--primary-color); opacity: 1; }
         .category-count {
           font-weight: 400;
           opacity: 0.7;
@@ -1325,6 +1332,7 @@ return result;
           </div>
         </div>
         <div class="card-content">
+          ${this._renderPendingItems()}
           ${
             this._error
               ? `<div class="error-banner"><span>${this._error}</span><button id="dismiss-error">✕</button></div>`
@@ -1356,7 +1364,6 @@ return result;
               : ""
           }
 
-          ${this._renderPendingItems()}
           ${this._renderManualForm()}
           ${this._renderRecipes()}
         </div>
