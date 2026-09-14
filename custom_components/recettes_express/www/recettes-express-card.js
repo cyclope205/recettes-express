@@ -183,6 +183,31 @@ class RecettesExpressCard extends HTMLElement {
     return "badge-ok";
   }
 
+  _recipeEmoji(title) {
+    const t = (title || "").toLowerCase();
+    const rules = [
+      [/soupe|velout|potage|bouillon|gaspacho/, "🥣"],
+      [/salade/, "🥗"],
+      [/p[âa]tes|spaghetti|nouilles|lasagne|macaroni/, "🍝"],
+      [/pizza/, "🍕"],
+      [/gratin|fromage|quiche/, "🧀"],
+      [/poulet|volaille|dinde|canard/, "🍗"],
+      [/poisson|saumon|thon|crevette|fruits de mer/, "🐟"],
+      [/riz|risotto/, "🍚"],
+      [/tarte|g[âa]teau|dessert|crumble|cookie|brownie/, "🍰"],
+      [/curry|wok/, "🍛"],
+      [/omelette|oeuf|œuf/, "🍳"],
+      [/sandwich|burger|wrap|panini/, "🥪"],
+      [/l[ée]gume|ratatouille|po[êe]l[ée]e/, "🥕"],
+      [/pain|toast|tartine/, "🍞"],
+      [/crepe|cr[êe]pe|pancake|galette/, "🥞"],
+    ];
+    for (const [regex, emoji] of rules) {
+      if (regex.test(t)) return emoji;
+    }
+    return "🍽️";
+  }
+
   _describeError(err) {
     if (!err) return "erreur inconnue";
     if (typeof err === "string") return err;
@@ -675,28 +700,48 @@ class RecettesExpressCard extends HTMLElement {
 
   _renderRecipes() {
     if (this._recipes.length === 0) return "";
+    const palettes = [
+      ["#ff7043", "#ff3d00"],
+      ["#ffb300", "#ff6f00"],
+      ["#ef5350", "#c62828"],
+      ["#8d6e63", "#5d4037"],
+    ];
     const cards = this._recipes
-      .map(
-        (recipe, i) => `
+      .map((recipe, i) => {
+        const emoji = this._recipeEmoji(recipe.title);
+        const c1 = palettes[i % palettes.length][0];
+        const c2 = palettes[i % palettes.length][1];
+        const steps = (recipe.steps || [])
+          .map(
+            (s, si) => `
+          <li><span class="step-num">${si + 1}</span><span class="step-text">${s}</span></li>`
+          )
+          .join("");
+        return `
         <div class="recipe-card ${recipe._accepted ? "recipe-card-done" : ""}">
-          <div class="recipe-title">${recipe.title}${recipe.prep_minutes ? ` <span class="recipe-time">⏱️ ${recipe.prep_minutes} min</span>` : ""}</div>
-          <ol class="recipe-steps">
-            ${(recipe.steps || []).map((s) => `<li>${s}</li>`).join("")}
+          <div class="recipe-hero" style="background: linear-gradient(135deg, ${c1}, ${c2});">
+            <span class="recipe-hero-emoji">${emoji}</span>
+            <div class="recipe-hero-text">
+              <div class="recipe-title">${recipe.title}</div>
+              ${recipe.prep_minutes ? `<span class="recipe-time">⏱️ ${recipe.prep_minutes} min</span>` : ""}
+            </div>
+          </div>
+          <ol class="recipe-steps">${steps}
           </ol>
           ${
-        recipe._accepted
-          ? `<p class="recipe-done-hint">Ingredients retires du stock (${recipe._removedCount || 0}).</p>
-      <button class="finish-recipe-btn" data-index="${i}">Recette terminee</button>`
-          : `<button class="accept-recipe-btn" data-index="${i}">✓ Valider cette recette</button>`
-      }
-        </div>`
-      )
+            recipe._accepted
+              ? `<p class="recipe-done-hint">Ingredients retires du stock (${recipe._removedCount || 0}).</p>
+          <button class="finish-recipe-btn" data-index="${i}">Recette terminee</button>`
+              : `<button class="accept-recipe-btn" data-index="${i}">✓ Valider cette recette</button>`
+          }
+        </div>`;
+      })
       .join("");
     return `
-      <div class="section recipes-section">
-        <div class="section-title">🍽️ Recettes suggerees</div>
-        ${cards}
-      </div>`;
+    <div class="section recipes-section">
+      <div class="section-title">🍲 Idees recettes anti-gaspi</div>
+      ${cards}
+    </div>`;
   }
 
   _render() {
@@ -787,6 +832,15 @@ class RecettesExpressCard extends HTMLElement {
           font-size: 1.28em;
           font-weight: 800;
           letter-spacing: 0.2px;
+        }
+        .card-header .emoji { font-size: 1.5em; }
+        .card-header-text { min-width: 0; }
+        .card-subtitle {
+          margin: 2px 0 0 0;
+          font-size: 0.78em;
+          font-weight: 600;
+          color: var(--secondary-text-color);
+          opacity: 0.85;
         }
         .card-content { padding: 10px 18px 20px 18px; }
 
@@ -1122,51 +1176,103 @@ class RecettesExpressCard extends HTMLElement {
         }
 
         .recipe-card {
-          background: linear-gradient(160deg, rgba(255,255,255,0.06), rgba(255,255,255,0.01));
-          border: 1px solid rgba(255,255,255,0.10);
-          border-left: 3px solid var(--primary-color);
-          border-radius: 16px;
-          padding: 14px 16px;
-          margin-bottom: 12px;
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
-        }
-        .recipe-title { font-weight: 800; margin-bottom: 8px; font-size: 1.02em; }
-.recipe-time { font-size: 0.72em; font-weight: 600; color: var(--secondary-text-color); }
-        .recipe-steps { margin: 0 0 12px 0; padding-left: 20px; }
-        .recipe-steps li { margin-bottom: 5px; font-size: 0.92em; line-height: 1.4; }
-        .accept-recipe-btn {
-          background: linear-gradient(135deg, var(--primary-color), color-mix(in srgb, var(--primary-color) 60%, #7a5cff));
-          color: var(--text-primary-color, #fff);
-          border: none;
-          border-radius: 999px;
-          padding: 8px 14px;
-          cursor: pointer;
-          font-weight: 700;
-          font-size: 0.9em;
-          box-shadow: 0 3px 10px color-mix(in srgb, var(--primary-color) 40%, transparent);
-          transition: filter 0.15s ease, transform 0.08s ease;
-        }
-        .accept-recipe-btn:hover { filter: brightness(1.08); }
-        .accept-recipe-btn:active { transform: scale(0.96); }
-        .recipe-card-done { opacity: 0.85; }
-        .recipe-done-hint { margin: 0 0 10px 0; font-size: 0.88em; font-weight: 600; color: var(--secondary-text-color); }
-        .finish-recipe-btn {
-          background: transparent;
-          color: var(--secondary-text-color);
-          border: 1px solid var(--divider-color, rgba(255,255,255,0.2));
-          border-radius: 999px;
-          padding: 8px 14px;
-          cursor: pointer;
-          font-weight: 700;
-          font-size: 0.9em;
-        }
-        .finish-recipe-btn:hover { filter: brightness(1.15); }
-        .finish-recipe-btn:active { transform: scale(0.96); }
+        background: linear-gradient(160deg, rgba(255,255,255,0.06), rgba(255,255,255,0.01));
+        border: 1px solid rgba(255,255,255,0.10);
+        border-radius: 18px;
+        overflow: hidden;
+        margin-bottom: 14px;
+        box-shadow: 0 3px 12px rgba(0,0,0,0.14);
+      }
+      .recipe-hero {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+        position: relative;
+      }
+      .recipe-hero::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 90% 0%, rgba(255,255,255,0.22), transparent 55%);
+        pointer-events: none;
+      }
+      .recipe-hero-emoji {
+        font-size: 2em;
+        width: 52px; height: 52px;
+        flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(255,255,255,0.22);
+        border-radius: 16px;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.35);
+      }
+      .recipe-hero-text { min-width: 0; }
+      .recipe-title { font-weight: 800; font-size: 1.05em; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.25); }
+      .recipe-time {
+        display: inline-block;
+        margin-top: 3px;
+        font-size: 0.74em;
+        font-weight: 700;
+        color: #fff;
+        background: rgba(255,255,255,0.22);
+        padding: 2px 9px;
+        border-radius: 999px;
+      }
+      .recipe-steps { margin: 0; padding: 14px 16px 4px 16px; list-style: none; }
+      .recipe-steps li { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px; font-size: 0.92em; line-height: 1.4; }
+      .step-num {
+        flex-shrink: 0;
+        width: 22px; height: 22px;
+        border-radius: 50%;
+        background: rgba(255,111,0,0.18);
+        color: #ffb74d;
+        font-weight: 800;
+        font-size: 0.78em;
+        display: flex; align-items: center; justify-content: center;
+      }
+      .step-text { padding-top: 1px; }
+      .accept-recipe-btn {
+        display: block;
+        width: calc(100% - 32px);
+        margin: 4px 16px 16px 16px;
+        background: linear-gradient(135deg, #ff7043, #ff3d00);
+        color: #fff;
+        border: none;
+        border-radius: 999px;
+        padding: 10px 14px;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 0.9em;
+        box-shadow: 0 3px 12px rgba(255,87,34,0.35);
+        transition: filter 0.15s ease, transform 0.08s ease;
+      }
+      .accept-recipe-btn:hover { filter: brightness(1.08); }
+      .accept-recipe-btn:active { transform: scale(0.96); }
+      .recipe-card-done { opacity: 0.85; }
+      .recipe-done-hint { margin: 12px 16px 0 16px; font-size: 0.88em; font-weight: 600; color: var(--secondary-text-color); }
+      .finish-recipe-btn {
+        display: block;
+        width: calc(100% - 32px);
+        margin: 8px 16px 16px 16px;
+        background: transparent;
+        color: var(--secondary-text-color);
+        border: 1px solid var(--divider-color, rgba(255,255,255,0.2));
+        border-radius: 999px;
+        padding: 10px 14px;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 0.9em;
+      }
+      .finish-recipe-btn:hover { filter: brightness(1.15); }
+      .finish-recipe-btn:active { transform: scale(0.96); }
       </style>
       <ha-card>
         <div class="card-header">
-          <span class="emoji">🍽️</span>
-          <h2>Recettes Express</h2>
+          <span class="emoji">👨‍🍳</span>
+          <div class="card-header-text">
+            <h2>Recettes Express</h2>
+            <p class="card-subtitle">Anti-gaspi &amp; inspiration cuisine</p>
+          </div>
         </div>
         <div class="card-content">
           ${
@@ -1189,8 +1295,8 @@ class RecettesExpressCard extends HTMLElement {
                 this._loading === "recipes"
                   ? '<span class="spinner"></span> Recherche…'
                   : selectedCount > 0
-                  ? `🍽️ Suggerer (${selectedCount} selectionne${selectedCount > 1 ? "s" : ""})`
-                  : "🍽️ Suggerer des recettes"
+                  ? `👨‍🍳 Suggerer (${selectedCount} selectionne${selectedCount > 1 ? "s" : ""})`
+                  : "👨‍🍳 Suggerer des recettes"
               }
             </button>
           </div>
