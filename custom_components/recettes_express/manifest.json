@@ -1,0 +1,11 @@
+{
+    "domain": "recettes_express",
+    "name": "Recettes Express",
+    "codeowners": ["@cyclope205"],
+    "config_flow": true,
+    "documentation": "https://github.com/cyclope205/recettes-express",
+    "issue_tracker": "https://github.com/cyclope205/recettes-express/issues",
+    "iot_class": "cloud_polling",
+    "requirements": [],
+    "version": "1.6.0"
+}
