@@ -14,6 +14,7 @@ from custom_components.recettes_express.gemini_client import (
     _coerce_number,
     _coerce_str,
     _extract_json,
+    _find_hallucinated_ingredients,
     _normalize_detected_items,
     _normalize_recipes,
 )
@@ -214,3 +215,105 @@ def test_normalize_recipes_steps_drops_blank_entries():
 def test_normalize_recipes_skips_non_dict_entries():
     recipes = _normalize_recipes(["not a dict", 42])
     assert recipes == []
+
+
+# --- category on detected items --------------------------------------
+
+
+def test_normalize_detected_items_valid_category_kept():
+    items = _normalize_detected_items([
+        {"name": "Tomate", "unit": "piece", "category": "fruits_legumes"}
+    ])
+    assert items[0]["category"] == "fruits_legumes"
+
+
+def test_normalize_detected_items_missing_category_is_guessed():
+    items = _normalize_detected_items([{"name": "Tomate", "unit": "piece"}])
+    assert items[0]["category"] == "fruits_legumes"
+
+
+def test_normalize_detected_items_invalid_category_is_guessed():
+    items = _normalize_detected_items([
+        {"name": "Tomate", "unit": "piece", "category": "pas-une-categorie"}
+    ])
+    assert items[0]["category"] == "fruits_legumes"
+
+
+def test_normalize_detected_items_unknown_name_falls_back_to_autres():
+    items = _normalize_detected_items([{"name": "Xyzzy inconnu", "unit": "piece"}])
+    assert items[0]["category"] == "autres"
+
+
+# --- _find_hallucinated_ingredients -----------------------------------
+
+
+def test_find_hallucinated_ingredients_detects_word_absent_from_stock():
+    found = _find_hallucinated_ingredients(
+        ["Saupoudrer de parmesan rape avant de servir."], ["Tomate", "Salade"]
+    )
+    assert "parmesan" in found
+
+
+def test_find_hallucinated_ingredients_allows_word_present_in_stock():
+    found = _find_hallucinated_ingredients(
+        ["Ajouter le fromage rape."], ["Fromage rape", "Pates"]
+    )
+    assert found == []
+
+
+def test_find_hallucinated_ingredients_respects_word_boundaries():
+    # "vin" ne doit pas matcher a l'interieur de "vinaigrette".
+    found = _find_hallucinated_ingredients(
+        ["Preparer une vinaigrette avec de l'huile."], ["Salade"]
+    )
+    assert "vin" not in found
+
+
+def test_find_hallucinated_ingredients_no_match_returns_empty():
+    found = _find_hallucinated_ingredients(
+        ["Couper les legumes et servir."], ["Tomate", "Salade"]
+    )
+    assert found == []
+
+
+def test_find_hallucinated_ingredients_ignores_accents_and_case():
+    found = _find_hallucinated_ingredients(
+        ["Ajouter de la CREME fraiche."], ["Tomate"]
+    )
+    assert "creme" in found
+
+
+# --- _normalize_recipes with stock_names (anti-hallucination barrier) --
+
+
+def test_normalize_recipes_rejects_recipe_with_hallucinated_ingredient():
+    recipes = _normalize_recipes(
+        [{"title": "Salade", "steps": ["Ajouter du parmesan rape."]}],
+        stock_names=["Tomate", "Salade"],
+    )
+    assert recipes == []
+
+
+def test_normalize_recipes_keeps_recipe_using_only_stock_and_staples():
+    recipes = _normalize_recipes(
+        [{"title": "Salade", "steps": ["Couper la tomate.", "Ajouter du sel et du poivre."]}],
+        stock_names=["Tomate"],
+    )
+    assert len(recipes) == 1
+
+
+def test_normalize_recipes_keeps_recipe_when_flagged_word_is_in_stock():
+    recipes = _normalize_recipes(
+        [{"title": "Gratin", "steps": ["Ajouter le fromage rape par-dessus."]}],
+        stock_names=["Fromage rape"],
+    )
+    assert len(recipes) == 1
+
+
+def test_normalize_recipes_without_stock_names_skips_hallucination_check():
+    # stock_names=None (comportement par defaut) : pas de verification, pour
+    # ne pas casser un appelant qui ne fournit pas encore cette info.
+    recipes = _normalize_recipes(
+        [{"title": "Salade", "steps": ["Ajouter du parmesan rape."]}],
+    )
+    assert len(recipes) == 1
