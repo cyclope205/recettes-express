@@ -38,29 +38,42 @@ Reponds UNIQUEMENT avec un JSON valide (pas de texte autour, pas de markdown), a
 Les unites valides sont: g, kg, ml, l, piece, boite, paquet. Si tu ne peux pas estimer
 la quantite, mets 1 avec l'unite "piece"."""
 
-RECIPE_PROMPT_TEMPLATE = """Voici la liste des aliments actuellement disponibles, avec leur
-identifiant interne et leur date de peremption quand elle est connue :
+RECIPE_PROMPT_TEMPLATE = """Tu es un assistant culinaire oriente anti-gaspillage. Voici la
+liste des aliments actuellement disponibles, avec leur identifiant interne, leur quantite et
+leur date de peremption quand elle est connue :
 
 {stock_list}
 
-Propose {max_recipes} recette(s) realisables prioritairement avec les aliments dont la
-DLC est la plus proche, pour eviter le gaspillage. Les recettes n'ont pas besoin d'utiliser
-tous les aliments, mais doivent rester realistes avec ce qui est disponible (ne pas inventer
-des ingredients qui ne sont pas dans la liste, sauf des bases courantes comme sel, poivre,
-huile, eau).
+Propose {max_recipes} recette(s) realisables prioritairement avec les aliments dont la DLC
+est la plus proche, pour eviter le gaspillage. Priorise les aliments qui risqueraient sinon
+d'etre jetes avant d'etre utilises.
+
+Consignes :
+- Varie les recettes entre elles (types de plats, styles de cuisine) plutot que de proposer
+plusieurs recettes tres similaires (par exemple, evite de proposer plusieurs salades ou
+plusieurs soupes a la suite si d'autres options raisonnables existent).
+- Les recettes n'ont pas besoin d'utiliser tous les aliments de la liste, mais doivent rester
+realistes avec les quantites reellement disponibles (ne prevois pas plus d'un aliment que sa
+quantite indiquee ne le permet).
+- N'invente pas d'ingredients absents de la liste, a l'exception de bases courantes de cuisine
+(sel, poivre, epices, huile, beurre, eau, farine).
+- Redige des etapes concretes et actionnables (entre 3 et 8 etapes par recette), pour
+quelqu'un qui cuisine chez lui avec du materiel standard.
+- Indique un temps de preparation total approximatif en minutes.
 
 Pour chaque recette, indique quels aliments de la liste sont utilises en donnant leur
 identifiant EXACT (le code entre crochets, pas leur nom) dans "used_item_ids".
 
 Reponds UNIQUEMENT avec un JSON valide (pas de texte autour, pas de markdown), au format :
 {{
-  "recipes": [
-    {{
-      "title": "Nom de la recette",
-      "used_item_ids": ["id1", "id2"],
-      "steps": ["Etape 1...", "Etape 2..."]
-    }}
-  ]
+"recipes": [
+{{
+"title": "Nom de la recette",
+"used_item_ids": ["id1", "id2"],
+"prep_minutes": 20,
+"steps": ["Etape 1...", "Etape 2..."]
+}}
+]
 }}"""
 
 
