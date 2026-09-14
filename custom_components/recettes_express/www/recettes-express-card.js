@@ -833,13 +833,12 @@ return result;
           position: relative;
           padding: 0;
           overflow: hidden;
-          border-radius: 28px !important;
-          background: linear-gradient(145deg, rgba(255,255,255,0.07), rgba(255,255,255,0.015)),
-                      var(--card-background-color);
-          backdrop-filter: blur(30px) saturate(180%);
-          -webkit-backdrop-filter: blur(30px) saturate(180%);
-          border: 1px solid rgba(255,255,255,0.12);
-          box-shadow: 0 10px 30px rgba(0,0,0,0.18), inset 0 1px 1px rgba(255,255,255,0.08);
+          border-radius: var(--ha-card-border-radius, 28px) !important;
+          background: var(--ha-card-background, linear-gradient(145deg, rgba(255,255,255,0.07), rgba(255,255,255,0.015)) var(--card-background-color));
+          backdrop-filter: var(--ha-card-backdrop-filter, blur(30px) saturate(180%));
+          -webkit-backdrop-filter: var(--ha-card-backdrop-filter, blur(30px) saturate(180%));
+          border: var(--ha-card-border-width, 1px) solid var(--ha-card-border-color, rgba(255,255,255,0.12));
+          box-shadow: var(--ha-card-box-shadow, 0 10px 30px rgba(0,0,0,0.18), inset 0 1px 1px rgba(255,255,255,0.08));
           color: var(--primary-text-color);
         }
         ha-card::before {
