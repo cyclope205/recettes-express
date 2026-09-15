@@ -414,6 +414,11 @@ class RecettesExpressCard extends HTMLElement {
     this._render();
   }
 
+  _dismissRecipe(index) {
+    this._recipes.splice(index, 1);
+    this._render();
+  }
+
   _toggleStockSection() {
     this._stockOpen = !this._stockOpen;
     this._render();
@@ -760,6 +765,7 @@ return result;
         return `
         <div class="recipe-card ${recipe._accepted ? "recipe-card-done" : ""}">
           <div class="recipe-hero" style="background: linear-gradient(135deg, ${c1}, ${c2});">
+            <button class="dismiss-recipe-btn" data-index="${i}" title="Ignorer cette recette" aria-label="Ignorer cette recette">&times;</button>
             <span class="recipe-hero-emoji">${emoji}</span>
             <div class="recipe-hero-text">
               <div class="recipe-title">${this._escapeHtml(recipe.title)}</div>
@@ -1246,6 +1252,28 @@ return result;
         padding: 16px;
         position: relative;
       }
+      .dismiss-recipe-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(0,0,0,0.35);
+        color: #fff;
+        font-size: 18px;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 2;
+        padding: 0;
+      }
+      .dismiss-recipe-btn:hover {
+        background: rgba(0,0,0,0.55);
+      }
       .recipe-hero::after {
         content: "";
         position: absolute;
@@ -1567,6 +1595,9 @@ return result;
     );
     root.querySelectorAll(".confirm-btn").forEach((btn) =>
       btn.addEventListener("click", (e) => this._confirmPendingItem(+e.currentTarget.dataset.index))
+    );
+    root.querySelectorAll(".dismiss-recipe-btn").forEach((btn) =>
+      btn.addEventListener("click", (e) => this._dismissRecipe(+e.currentTarget.dataset.index))
     );
     root.querySelectorAll(".discard-btn").forEach((btn) =>
       btn.addEventListener("click", (e) => this._discardPendingItem(+e.currentTarget.dataset.index))
