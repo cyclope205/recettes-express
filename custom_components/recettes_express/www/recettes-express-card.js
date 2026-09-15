@@ -302,6 +302,15 @@ class RecettesExpressCard extends HTMLElement {
       return;
     }
     this._error = null;
+    if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      this._error =
+        "Le micro necessite une connexion securisee (HTTPS) a Home Assistant. " +
+        "Sur une IP locale en http:// (y compris via Tailscale sans certificat), les navigateurs bloquent l'acces au micro " +
+        "(meme limitation que l'Assist officiel de Home Assistant). Utilisez un acces HTTPS (Nabu Casa, certificat local, " +
+        "reverse proxy...) pour activer cette fonctionnalite.";
+      this._render();
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mimeType = ["audio/webm", "audio/mp4", "audio/ogg"].find(
