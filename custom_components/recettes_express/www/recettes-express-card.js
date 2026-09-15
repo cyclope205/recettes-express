@@ -33,6 +33,7 @@ class RecettesExpressCard extends HTMLElement {
     this._recipes = [];
     this._loading = null;
     this._error = null;
+    this._recording = false;
     this._manualItem = { name: "", quantity: 1, unit: "piece", expiration_date: "" };
     this._manualOpen = false;
     this._stockOpen = true;
@@ -286,6 +287,86 @@ class RecettesExpressCard extends HTMLElement {
       } catch {
         // sans consequence si ca echoue malgre tout
       }
+      this._render();
+    }
+  }
+
+  async _onVoiceClick() {
+    if (this._recording) {
+      if (this._mediaRecorder && this._mediaRecorder.state !== "inactive") {
+        this._mediaRecorder.stop();
+      }
+      return;
+    }
+    if (this._loading) {
+      return;
+    }
+    this._error = null;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = ["audio/webm", "audio/mp4", "audio/ogg"].find(
+        (type) => window.MediaRecorder && MediaRecorder.isTypeSupported(type)
+      );
+      const recorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream);
+      const chunks = [];
+      recorder.addEventListener("dataavailable", (e) => {
+        if (e.data && e.data.size > 0) {
+          chunks.push(e.data);
+        }
+      });
+      recorder.addEventListener("stop", () => {
+        stream.getTracks().forEach((track) => track.stop());
+        this._recording = false;
+        const blob = new Blob(chunks, { type: recorder.mimeType || mimeType || "audio/webm" });
+        this._onVoiceRecorded(blob);
+      });
+      this._mediaRecorder = recorder;
+      recorder.start();
+      this._recording = true;
+      this._render();
+    } catch (err) {
+      this._recording = false;
+      this._error = "Microphone indisponible : " + this._describeError(err);
+      this._render();
+    }
+  }
+
+  async _onVoiceRecorded(blob) {
+    if (!blob || blob.size === 0) {
+      this._error = "Aucun son enregistre.";
+      this._render();
+      return;
+    }
+
+    try {
+      this._error = null;
+      this._loading = "voice";
+      this._render();
+
+      const dataUrl = await this._fileToBase64(blob);
+      const base64 = String(dataUrl).split(",")[1] || dataUrl;
+      const result = await this._callService(
+        "add_item_from_voice",
+        { audio_base64: base64, audio_mime_type: blob.type || "audio/webm" },
+        true
+      );
+      const items = (result && result.response && result.response.detected_items) || [];
+      if (items.length === 0) {
+        this._error = "Aucun aliment detecte dans cet enregistrement.";
+      }
+      const detectedItems = items.map((item) => ({
+        name: item.name || "",
+        quantity: item.quantity ?? 1,
+        unit: item.unit || "piece",
+        expiration_date: item.expiration_date || "",
+      }));
+      this._pendingItems = this._pendingItems.concat(detectedItems);
+    } catch (err) {
+      this._error = "Erreur reconnaissance micro : " + this._describeError(err);
+    } finally {
+      this._loading = null;
       this._render();
     }
   }
@@ -1124,6 +1205,21 @@ return result;
           color: var(--primary-text-color);
           border: 1px solid rgba(255,255,255,0.14);
         }
+        .btn-voice {
+          background: rgba(255,255,255,0.07);
+          color: var(--primary-text-color);
+          border: 1px solid rgba(255,255,255,0.14);
+        }
+        .btn-voice.recording {
+          background: rgba(244,67,54,0.16);
+          color: #f44336;
+          border: 1px solid rgba(244,67,54,0.4);
+          animation: recettes-express-pulse 1.4s ease-in-out infinite;
+        }
+        @keyframes recettes-express-pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.55; }
+        }
         .btn-primary {
           background: linear-gradient(135deg, var(--primary-color), color-mix(in srgb, var(--primary-color) 60%, #7a5cff));
           color: var(--text-primary-color, #fff);
@@ -1368,6 +1464,16 @@ return result;
             </button>
             <input type="file" id="photo-input" accept="image/*" capture="environment" style="position:absolute; width:1px; height:1px; opacity:0; overflow:hidden;" />
 
+            <button class="btn btn-voice${this._recording ? " recording" : ""}" id="voice-btn" ${this._loading === "voice" ? "disabled" : ""}>
+              ${
+                this._loading === "voice"
+                  ? '<span class="spinner"></span> Analyse\u2026'
+                  : this._recording
+                  ? "\u23F9\uFE0F Arreter"
+                  : "\uD83C\uDFA4 Ajouter par micro"
+              }
+            </button>
+
             <button class="btn btn-primary" id="suggest-btn" ${this._loading === "recipes" ? "disabled" : ""}>
               ${
                 this._loading === "recipes"
@@ -1463,6 +1569,11 @@ return result;
         photoInput.click();
       });
       photoInput.addEventListener("change", (e) => this._onPhotoSelected(e));
+    }
+
+    const voiceBtn = root.getElementById("voice-btn");
+    if (voiceBtn) {
+      voiceBtn.addEventListener("click", () => this._onVoiceClick());
     }
 
     const suggestBtn = root.getElementById("suggest-btn");
