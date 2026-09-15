@@ -1469,8 +1469,10 @@ return result;
     if (manualQuickDate) {
       manualQuickDate.addEventListener("change", (e) => {
         if (e.target.value) {
-          this._updateManualField("expiration_date", this._addDaysISO(e.target.value));
-          this._render();
+          const computed = this._addDaysISO(e.target.value);
+          this._updateManualField("expiration_date", computed);
+          manualExp.value = computed;
+          e.target.blur();
         }
       });
     }
@@ -1552,8 +1554,14 @@ return result;
     root.querySelectorAll(".pending-quick-date").forEach((el) =>
       el.addEventListener("change", (e) => {
         if (e.target.value) {
-          this._updatePendingField(+e.target.dataset.index, "expiration_date", this._addDaysISO(e.target.value));
-          this._render();
+          const computed = this._addDaysISO(e.target.value);
+          this._updatePendingField(+e.target.dataset.index, "expiration_date", computed);
+          const dateEl = root.querySelector(`.pending-exp[data-index="${e.target.dataset.index}"]`);
+          if (dateEl) {
+            dateEl.value = computed;
+            dateEl.classList.remove("field-missing");
+          }
+          e.target.blur();
         }
       })
     );
