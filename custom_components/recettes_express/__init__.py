@@ -29,6 +29,8 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.event import async_call_later
 
 from .const import (
+    ATTR_AUDIO_BASE64,
+    ATTR_AUDIO_MIME_TYPE,
     ATTR_CAMERA_ENTITY_ID,
     ATTR_CATEGORY,
     ATTR_EXPIRATION_DATE,
@@ -48,6 +50,7 @@ from .const import (
     SERVICE_ACCEPT_RECIPE,
     SERVICE_ADD_ITEM,
     SERVICE_ADD_ITEM_FROM_PHOTO,
+    SERVICE_ADD_ITEM_FROM_VOICE,
     SERVICE_REMOVE_ITEM,
     SERVICE_SUGGEST_RECIPES,
     SERVICE_UPDATE_ITEM,
@@ -93,6 +96,13 @@ ADD_ITEM_FROM_PHOTO_SCHEMA = vol.Schema(
         vol.Optional(ATTR_IMAGE_PATH): cv.string,
         vol.Optional(ATTR_IMAGE_BASE64): cv.string,
         vol.Optional(ATTR_CAMERA_ENTITY_ID): cv.entity_id,
+    }
+)
+
+ADD_ITEM_FROM_VOICE_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_AUDIO_BASE64): cv.string,
+        vol.Optional(ATTR_AUDIO_MIME_TYPE, default="audio/webm"): cv.string,
     }
 )
 
@@ -373,6 +383,21 @@ def _async_register_services(hass: HomeAssistant, entry: ConfigEntry) -> None:
 
         return {"detected_items": detected_items}
 
+    async def handle_add_item_from_voice(call: ServiceCall) -> ServiceResponse:
+        data = _get_entry_data(hass)
+        gemini: GeminiClient = data["gemini"]
+
+        audio_base64 = call.data[ATTR_AUDIO_BASE64]
+        mime_type = call.data.get(ATTR_AUDIO_MIME_TYPE, "audio/webm")
+        audio_bytes = base64.b64decode(audio_base64)
+
+        try:
+            detected_items = await gemini.recognize_food_from_voice(audio_bytes, mime_type)
+        except GeminiError as err:
+            raise HomeAssistantError(f"Reconnaissance IA impossible: {err}") from err
+
+        return {"detected_items": detected_items}
+
     async def handle_suggest_recipes(call: ServiceCall) -> ServiceResponse:
         data = _get_entry_data(hass)
         stock: StockManager = data["stock"]
@@ -427,6 +452,13 @@ def _async_register_services(hass: HomeAssistant, entry: ConfigEntry) -> None:
         SERVICE_ADD_ITEM_FROM_PHOTO,
         handle_add_item_from_photo,
         schema=ADD_ITEM_FROM_PHOTO_SCHEMA,
+        supports_response=SupportsResponse.ONLY,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_ADD_ITEM_FROM_VOICE,
+        handle_add_item_from_voice,
+        schema=ADD_ITEM_FROM_VOICE_SCHEMA,
         supports_response=SupportsResponse.ONLY,
     )
     hass.services.async_register(
