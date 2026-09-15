@@ -7,7 +7,7 @@ CONF_GEMINI_API_KEY = "gemini_api_key"
 DEFAULT_NAME = "Recettes Express"
 
 # Unites disponibles pour les quantites en stock
-UNITS = ["g", "kg", "ml", "l", "piece", "boite", "paquet"]
+UNITS = ["g", "kg", "cl", "l", "piece", "boite", "paquet"]
 
 # Cle du fichier de stockage persistant (Store helper). Volontairement PAS
 # derivee de DOMAIN : ce projet s'appelait "recettes_du_frigo" avant d'etre
