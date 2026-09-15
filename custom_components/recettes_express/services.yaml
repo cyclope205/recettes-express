@@ -111,6 +111,23 @@ add_item_from_photo:
         entity:
           domain: camera
 
+add_item_from_voice:
+  name: Ajouter par micro
+  description: >
+    Analyse un enregistrement audio via Gemini et retourne les aliments detectes
+    pour confirmation. N'ajoute rien automatiquement au stock.
+  fields:
+    audio_base64:
+      name: Audio (base64)
+      required: true
+      selector:
+        text:
+    audio_mime_type:
+      name: Type MIME audio
+      required: false
+      selector:
+        text:
+
 suggest_recipes:
   name: Suggerer des recettes
   description: Demande a Gemini de proposer des recettes a partir du stock actuel.
