@@ -43,6 +43,32 @@ Les unites valides sont: g, kg, ml, l, piece, boite, paquet. Si tu ne peux pas e
 la quantite, mets 1 avec l'unite "piece". Pour la categorie, choisis la plus
 appropriee dans la liste ci-dessus ; utilise "autres" si aucune ne convient clairement."""
 
+VOICE_RECOGNITION_PROMPT_TEMPLATE = """Nous sommes le {today}. Tu ecoutes un enregistrement audio en francais
+dans lequel une personne enonce a voix haute un ou plusieurs aliments qu'elle vient d'acheter
+ou de ranger dans son stock, generalement avec la quantite et parfois la date de peremption.
+Identifie chaque aliment mentionne.
+
+Pour la date de peremption (DLC/DDM) de chaque aliment :
+- Si une date est explicitement mentionnee dans l'audio, utilise-la (convertis-la au format
+  YYYY-MM-DD, en te basant sur l'annee en cours si elle n'est pas precisee).
+- Si aucune date n'est mentionnee, NE METS PAS null : estime plutot une date de peremption
+  raisonnable a partir d'aujourd'hui, en te basant sur la duree de conservation typique de cet
+  aliment a temperature ambiante ou au frigo selon ce qui est le plus probable.
+
+Si la quantite n'est pas mentionnee, utilise 1. Si l'unite n'est pas mentionnee, utilise "piece".
+Pour la categorie, choisis la plus appropriee parmi : fruits_legumes, viandes_poissons,
+produits_laitiers, surgeles, pain_boulangerie, condiments_epices, boissons, epicerie, autres.
+
+Reponds UNIQUEMENT avec un JSON valide (pas de texte autour, pas de markdown), au format :
+{{
+  "items": [
+    {{"name": "nom de l'aliment", "quantity": 1, "unit": "piece",
+     "expiration_date": "YYYY-MM-DD ou null",
+     "categorie": "une valeur parmi fruits_legumes|viandes_poissons|produits_laitiers|surgeles|pain_boulangerie|condiments_epices|boissons|epicerie|autres"}}
+  ]
+}}
+Si aucun aliment n'est identifiable dans l'audio, reponds avec {{"items": []}}."""
+
 RECIPE_PROMPT_TEMPLATE = """Tu es un assistant culinaire oriente anti-gaspillage. Voici la
 liste EXHAUSTIVE des aliments actuellement disponibles, avec leur identifiant interne, leur
 quantite et leur date de peremption quand elle est connue :
@@ -332,6 +358,22 @@ class GeminiClient:
         # tache d'extraction directe comme celle-ci - identifier des
         # aliments visibles et lire/estimer une date ne demande pas de
         # raisonnement multi-etapes.
+        text = await self._generate(GEMINI_VISION_MODEL, parts, thinking_level="minimal")
+        result = _extract_json(text)
+        return _normalize_detected_items(result.get("items"))
+
+    async def recognize_food_from_voice(
+        self, audio_bytes: bytes, mime_type: str = "audio/webm"
+    ) -> list[dict[str, Any]]:
+        """Envoie un enregistrement audio a Gemini et retourne une liste d'aliments detectes."""
+        b64_audio = base64.b64encode(audio_bytes).decode("ascii")
+        prompt = VOICE_RECOGNITION_PROMPT_TEMPLATE.format(today=date.today().isoformat())
+        parts = [
+            {"text": prompt},
+            {"inline_data": {"mime_type": mime_type, "data": b64_audio}},
+        ]
+        # "minimal" convient bien ici aussi : extraction directe depuis l'audio,
+        # pas de raisonnement complexe necessaire.
         text = await self._generate(GEMINI_VISION_MODEL, parts, thinking_level="minimal")
         result = _extract_json(text)
         return _normalize_detected_items(result.get("items"))
