@@ -17,12 +17,12 @@ Integration Home Assistant pour gerer le stock d'aliments (frigo, garde-manger) 
 ---
 Vue d'ensemble : bloc d'actions (photo, ajout manuel) et recettes suggerees juste sous l'entete, aliments a suivre en dessous :
 
-<img width="460" alt="Recettes Express - accueil" src="screenshots/screenshot-1789432962611-f7d218ed.png" />
+<img width="460" alt="Recettes Express - accueil" src="screenshots/84f87155-FullSizeRender.jpeg" />
 
 ---
 Suggestions de recettes generees par IA, affichees directement sous le bloc d'actions :
 
-<img width="415" alt="Recettes Express - suggestion de recette" src="screenshots/screenshot-1789432941555-97d99e4d.png" />
+<img width="415" alt="Recettes Express - suggestion de recette" src="screenshots/51bc5666-IMG_8191.png" />
 
 ## Fonctionnalites
 
