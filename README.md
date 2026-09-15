@@ -35,6 +35,26 @@ Suggestions de recettes generees par IA, affichees directement sous le bloc d'ac
 - Carte Lovelace personnalisee incluse (stock, aliments bientot perimes, recettes suggerees), avec le bloc d'actions et les recettes juste sous l'entete pour un acces rapide
 - Capteurs : nombre d'aliments en stock, aliments bientot perimes
 
+## Bien photographier un aliment
+
+Pour que la reconnaissance par IA renseigne seule le nom de l'aliment et sa date de peremption (DLC), la photo doit montrer **a la fois** :
+
+- le nom / descriptif du produit (etiquette de l'emballage)
+- la date de peremption ou "a consommer jusqu'au" (DLC), imprimee ou estampillee sur l'emballage
+
+Quelques conseils pour une detection fiable :
+
+- a plat, cadrez l'emballage en entier, sans reflet ni ombre sur le texte
+- rapprochez l'appareil ou zoomez pour que la date de peremption soit nette et lisible
+- si le nom du produit et la DLC ne sont pas du meme cote de l'emballage, prenez une photo qui montre les deux, ou repliez l'emballage pour les faire apparaitre ensemble
+
+Exemples de photos correctement cadrees (nom du produit et DLC lisibles) :
+
+<img width="300" alt="Exemple de photo : nom du produit et DLC visibles (jambon)" src="screenshots/33474e6e-photo.jpeg" />
+<img width="300" alt="Exemple de photo : nom du produit et DLC visibles (saucisse de Morteau)" src="screenshots/bb5cc721-photo.jpeg" />
+
+Sans ces informations visibles sur la photo, l'IA peut se tromper sur le nom de l'aliment ou ne pas detecter de date, ce qui oblige a completer les champs manquants a la main.
+
 ## Installation
 
 ### Via HACS (recommande)
