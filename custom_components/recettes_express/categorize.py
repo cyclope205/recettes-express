@@ -17,6 +17,10 @@ from .const import CATEGORIES, DEFAULT_CATEGORY
 # L'ordre des categories determine la priorite en cas de mot-cle ambigu
 # (ex. "lait" est dans produits_laitiers, pas boissons, car verifie avant).
 _KEYWORDS: dict[str, list[str]] = {
+    "surgeles": [
+        "surgele", "surgelee", "congele", "congelee", "glace", "sorbet",
+        "glacon",
+    ],
     "boissons": [
         "eau", "jus", "soda", "the", "cafe", "vin", "biere", "limonade",
         "sirop", "smoothie", "cidre", "champagne", "tisane",
@@ -46,11 +50,19 @@ _KEYWORDS: dict[str, list[str]] = {
         "courge", "potiron", "citrouille", "persil", "basilic", "coriandre",
         "ciboulette", "menthe", "gingembre",
     ],
+    "pain_boulangerie": [
+        "pain", "baguette", "viennoiserie", "croissant", "brioche", "biscotte",
+        "tartine", "pain de mie", "pain complet", "pain au chocolat",
+    ],
+    "condiments_epices": [
+        "sel", "poivre", "huile", "vinaigre", "moutarde", "mayonnaise",
+        "ketchup", "sauce", "bouillon", "epice", "curry", "paprika",
+        "cannelle", "cumin", "muscade", "herbes de provence",
+    ],
     "epicerie": [
-        "riz", "pates", "pate", "farine", "sucre", "sel", "poivre", "huile",
-        "vinaigre", "moutarde", "mayonnaise", "ketchup", "sauce", "conserve",
-        "bouillon", "epice", "cereale", "biscuit", "chocolat", "confiture",
-        "miel", "pain", "levure", "lentille", "pois chiche", "quinoa",
+        "riz", "pates", "pate", "farine", "sucre", "conserve",
+        "cereale", "biscuit", "chocolat", "confiture",
+        "miel", "levure", "lentille", "pois chiche", "quinoa",
         "semoule", "gateau", "gaufre", "compote", "chips", "noix", "amande",
         "cacahuete", "olive",
     ],
