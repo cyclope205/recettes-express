@@ -61,6 +61,8 @@ En plus de la photo, un bouton "🎤 Ajouter par micro" permet d'enregistrer un 
 
 Comme pour la photo, l'IA (Gemini) analyse l'enregistrement et propose les aliments detectes pour confirmation avant tout ajout au stock. Si vous ne precisez pas de quantite, d'unite ou de date de peremption, des valeurs par defaut raisonnables sont proposees et restent modifiables avant validation.
 
+> ⚠️ **Le micro necessite un acces a Home Assistant en HTTPS** (certificat local, reverse proxy, Nabu Casa, certificats Tailscale...). C'est une restriction des navigateurs eux-memes (l'API `getUserMedia` est bloquee hors HTTPS/localhost) : c'est exactement la meme limitation que rencontre l'Assist officiel de Home Assistant en HTTP simple. Sur un acces en `http://` (IP locale, Tailscale sans certificat...), le bouton affichera un message expliquant qu'il faut passer en HTTPS. L'ajout par photo n'est pas concerne, il fonctionne quel que soit l'acces.
+
 ## Installation
 
 ### Via HACS (recommande)
