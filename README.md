@@ -15,14 +15,14 @@ Integration Home Assistant pour gerer le stock d'aliments (frigo, garde-manger) 
 ## Captures d’ecran
 
 ---
-Accueil et aliments a suivre :
+Vue d'ensemble : bloc d'actions (photo, ajout manuel) et recettes suggerees juste sous l'entete, aliments a suivre en dessous :
 
-<img width="460" alt="Recettes Express - accueil" src="screenshots/screenshot-1789401938611-0cf3af6e.png" />
+<img width="460" alt="Recettes Express - accueil" src="screenshots/screenshot-1789432962611-f7d218ed.png" />
 
 ---
-Suggestion de recette generee par IA :
+Suggestions de recettes generees par IA, affichees directement sous le bloc d'actions :
 
-<img width="415" alt="Recettes Express - suggestion de recette" src="screenshots/screenshot-1789401958207-2c11c636.png" />
+<img width="415" alt="Recettes Express - suggestion de recette" src="screenshots/screenshot-1789432941555-97d99e4d.png" />
 
 ## Fonctionnalites
 
@@ -30,7 +30,9 @@ Suggestion de recette generee par IA :
 - Gestion du stock : modification, suppression, recherche, tri (nom ou date de peremption)
 - Suggestions de recettes anti-gaspi a partir du stock (ou d'une selection d'aliments), avec temps de preparation estime
 - Validation d'une recette : deduction automatique des ingredients utilises, la recette reste affichee jusqu'a confirmation de fin
-- Carte Lovelace personnalisee incluse (stock, aliments bientot perimes, recettes suggerees)
+- Categorisation automatique des aliments par mots-cles (fruits & legumes, viandes & poissons, produits laitiers, boissons, epicerie, autres)
+- Section "Aliments selectionnes" epinglee en haut de la liste, qui apparait des qu'un aliment est coche
+- Carte Lovelace personnalisee incluse (stock, aliments bientot perimes, recettes suggerees), avec le bloc d'actions et les recettes juste sous l'entete pour un acces rapide
 - Capteurs : nombre d'aliments en stock, aliments bientot perimes
 
 ## Installation
