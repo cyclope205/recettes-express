@@ -26,11 +26,11 @@ Suggestions de recettes generees par IA, affichees directement sous le bloc d'ac
 
 ## Fonctionnalites
 
-- Ajout d'aliments par photo (reconnaissance IA) ou manuellement, avec date de peremption obligatoire
+- Ajout d'aliments par photo, par micro (reconnaissance vocale en francais) ou manuellement, avec date de peremption obligatoire
 - Gestion du stock : modification, suppression, recherche, tri (nom ou date de peremption)
 - Suggestions de recettes anti-gaspi a partir du stock (ou d'une selection d'aliments), avec temps de preparation estime
 - Validation d'une recette : deduction automatique des ingredients utilises, la recette reste affichee jusqu'a confirmation de fin
-- Categorisation automatique des aliments par mots-cles (fruits & legumes, viandes & poissons, produits laitiers, boissons, epicerie, autres)
+- Categorisation automatique des aliments par mots-cles (fruits & legumes, viandes & poissons, produits laitiers, surgeles, pain & boulangerie, condiments & epices, boissons, epicerie, autres)
 - Section "Aliments selectionnes" epinglee en haut de la liste, qui apparait des qu'un aliment est coche
 - Carte Lovelace personnalisee incluse (stock, aliments bientot perimes, recettes suggerees), avec le bloc d'actions et les recettes juste sous l'entete pour un acces rapide
 - Capteurs : nombre d'aliments en stock, aliments bientot perimes
@@ -54,6 +54,12 @@ Exemples de photos correctement cadrees (nom du produit et DLC lisibles) :
 <img width="300" alt="Exemple de photo : nom du produit et DLC visibles (saucisse de Morteau)" src="screenshots/bb5cc721-photo.jpeg" />
 
 Sans ces informations visibles sur la photo, l'IA peut se tromper sur le nom de l'aliment ou ne pas detecter de date, ce qui oblige a completer les champs manquants a la main.
+
+## Ajouter des aliments par micro
+
+En plus de la photo, un bouton "🎤 Ajouter par micro" permet d'enregistrer un court message vocal (en francais) pour ajouter des aliments sans les taper. Enoncez simplement ce que vous rangez, par exemple : *"deux yaourts nature, ils perime dans une semaine"* ou *"une boite de conserve de haricots verts"*.
+
+Comme pour la photo, l'IA (Gemini) analyse l'enregistrement et propose les aliments detectes pour confirmation avant tout ajout au stock. Si vous ne precisez pas de quantite, d'unite ou de date de peremption, des valeurs par defaut raisonnables sont proposees et restent modifiables avant validation.
 
 ## Installation
 
