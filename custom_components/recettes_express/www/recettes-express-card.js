@@ -629,7 +629,7 @@ return result;
       <div class="pending-row-line2">
         <input type="number" step="0.1" class="edit-qty" value="${this._escapeHtml(edit.quantity)}" />
         <select class="edit-unit">
-          ${["g", "kg", "ml", "l", "piece", "boite", "paquet"]
+          ${["g", "kg", "cl", "l", "piece", "boite", "paquet"]
             .map((u) => `<option value="${u}" ${u === edit.unit ? "selected" : ""}>${u}</option>`)
             .join("")}
         </select>
@@ -746,7 +746,7 @@ return result;
           <div class="manual-row">
             <input type="number" step="0.1" id="manual-qty" value="${this._escapeHtml(item.quantity)}" />
             <select id="manual-unit">
-              ${["g", "kg", "ml", "l", "piece", "boite", "paquet"]
+              ${["g", "kg", "cl", "l", "piece", "boite", "paquet"]
                 .map((u) => `<option value="${u}" ${u === item.unit ? "selected" : ""}>${u}</option>`)
                 .join("")}
             </select>
@@ -776,7 +776,7 @@ return result;
           <div class="pending-row-line2">
             <input type="number" step="0.1" class="pending-qty" data-index="${i}" value="${this._escapeHtml(item.quantity)}" />
             <select class="pending-unit" data-index="${i}">
-              ${["g", "kg", "ml", "l", "piece", "boite", "paquet"]
+              ${["g", "kg", "cl", "l", "piece", "boite", "paquet"]
                 .map((u) => `<option value="${u}" ${u === item.unit ? "selected" : ""}>${u}</option>`)
                 .join("")}
             </select>
