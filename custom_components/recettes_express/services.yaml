@@ -146,6 +146,32 @@ suggest_recipes:
           max: 5
           step: 1
           mode: box
+    servings:
+      name: Nombre de personnes
+      description: Adapte les quantites des recettes pour ce nombre de convives.
+      required: false
+      selector:
+        number:
+          min: 1
+          max: 20
+          step: 1
+          mode: box
+    vegetarian:
+      name: Vegetarien uniquement
+      description: Ne propose que des recettes sans viande ni poisson.
+      required: false
+      selector:
+        boolean:
+    max_prep_minutes:
+      name: Temps de preparation max (minutes)
+      description: Ecarte les recettes dont le temps de preparation total depasserait cette limite.
+      required: false
+      selector:
+        number:
+          min: 5
+          max: 240
+          step: 5
+          mode: box
 
 accept_recipe:
   name: Valider une recette
