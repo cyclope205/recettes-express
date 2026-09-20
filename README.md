@@ -65,7 +65,7 @@ A cote du bouton "👨‍🍳 Suggerer des recettes", un bouton ⚙️ ouvre un 
 
 Ces champs sont optionnels : laisses vides ou decoches, le comportement est identique a avant (aucune contrainte supplementaire). Comme pour le reste des suggestions, il s'agit de consignes donnees a l'IA et non de garanties absolues — verifiez toujours la recette proposee.
 
-<img width="460" alt="Recettes Express - options de suggestion de recettes (personnes, vegetarien, temps max)" src="https://github.com/user-attachments/assets/4e63a8bc-2367-4e4e-93ff-79ac6b65717f" />
+<img width="380" alt="Recettes Express - options de suggestion de recettes (personnes, vegetarien, temps max)" src="https://github.com/user-attachments/assets/1c06f812-b905-4a3e-8b87-ff22f950d43a" />
 
 ## Ajouter des aliments par micro
 
