@@ -74,6 +74,9 @@ ATTR_AUDIO_BASE64 = "audio_base64"
 ATTR_AUDIO_MIME_TYPE = "audio_mime_type"
 ATTR_CAMERA_ENTITY_ID = "camera_entity_id"
 ATTR_MAX_RECIPES = "max_recipes"
+ATTR_SERVINGS = "servings"
+ATTR_VEGETARIAN = "vegetarian"
+ATTR_MAX_PREP_MINUTES = "max_prep_minutes"
 ATTR_RECIPE_INDEX = "recipe_index"
 
 # Donnees en memoire (non persistees) : dernieres recettes suggerees par entree
