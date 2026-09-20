@@ -65,7 +65,8 @@ A cote du bouton "👨‍🍳 Suggerer des recettes", un bouton ⚙️ ouvre un 
 
 Ces champs sont optionnels : laisses vides ou decoches, le comportement est identique a avant (aucune contrainte supplementaire). Comme pour le reste des suggestions, il s'agit de consignes donnees a l'IA et non de garanties absolues — verifiez toujours la recette proposee.
 
-<img width="460" alt="Recettes Express - options de suggestion de recettes (personnes, vegetarien, temps max)" src="https://github.com/user-attachments/assets/8f392e2b-5ccb-4cb2-be87-72cb36a0252a" />
+<img width="460" alt="Recettes Express - options de suggestion de recettes (personnes, vegetarien, temps max)" src="https://github.com/user-attachments/assets/4e63a8bc-2367-4e4e-93ff-79ac6b65717f" />
+
 ## Ajouter des aliments par micro
 
 En plus de la photo, un bouton "🎤 Ajouter par micro" permet d'enregistrer un court message vocal (en francais) pour ajouter des aliments sans les taper. Enoncez simplement ce que vous rangez, par exemple : *"deux yaourts nature, ils perime dans une semaine"* ou *"une boite de conserve de haricots verts"*.
