@@ -43,6 +43,8 @@ class RecettesExpressCard extends HTMLElement {
     this._stockSort = "expiration";
     this._editingItemId = null;
     this._editItem = { name: "", quantity: 1, unit: "piece", expiration_date: "" };
+    this._recipeOptions = { servings: "", vegetarian: false, max_prep_minutes: "" };
+    this._recipeOptionsOpen = false;
     this._render();
   }
 
@@ -95,6 +97,7 @@ class RecettesExpressCard extends HTMLElement {
     if (this._pendingItems.length > 0) size += 1 + this._pendingItems.length;
     if (this._recipes.length > 0) size += 1 + this._recipes.length * 2;
     if (this._manualOpen) size += 2;
+    if (this._recipeOptionsOpen) size += 1;
     return size;
   }
 
@@ -462,6 +465,11 @@ class RecettesExpressCard extends HTMLElement {
       const itemIds = Array.from(this._selectedItemIds);
       const payload = { max_recipes: 3 };
       if (itemIds.length > 0) payload.item_ids = itemIds;
+      const servings = parseInt(this._recipeOptions.servings, 10);
+      if (servings > 0) payload.servings = servings;
+      if (this._recipeOptions.vegetarian) payload.vegetarian = true;
+      const maxPrepMinutes = parseInt(this._recipeOptions.max_prep_minutes, 10);
+      if (maxPrepMinutes > 0) payload.max_prep_minutes = maxPrepMinutes;
       const result = await this._callService("suggest_recipes", payload, true);
       this._recipes = (result && result.response && result.response.recipes) || [];
       if (this._recipes.length === 0) {
@@ -520,6 +528,32 @@ class RecettesExpressCard extends HTMLElement {
   _toggleManualForm() {
     this._manualOpen = !this._manualOpen;
     this._render();
+  }
+
+  _toggleRecipeOptions() {
+    this._recipeOptionsOpen = !this._recipeOptionsOpen;
+    this._render();
+  }
+
+  _renderRecipeOptions() {
+    const opts = this._recipeOptions;
+    return `
+      <div class="recipe-options ${this._recipeOptionsOpen ? "" : "collapsed"}">
+        <div class="recipe-options-row">
+          <label class="recipe-options-field">
+            <span>👥 Personnes</span>
+            <input type="number" min="1" max="20" step="1" id="recipe-servings" placeholder="—" value="${this._escapeHtml(opts.servings)}" />
+          </label>
+          <label class="recipe-options-field">
+            <span>⏱️ Temps max (min)</span>
+            <input type="number" min="5" max="240" step="5" id="recipe-max-time" placeholder="—" value="${this._escapeHtml(opts.max_prep_minutes)}" />
+          </label>
+        </div>
+        <label class="recipe-options-checkbox">
+          <input type="checkbox" id="recipe-vegetarian" ${opts.vegetarian ? "checked" : ""} />
+          <span>🥦 Vegetarien uniquement</span>
+        </label>
+      </div>`;
   }
 
   _updateManualField(field, value) {
@@ -1047,6 +1081,63 @@ return result;
         }
         .clear-selection-btn:hover { text-decoration: underline; }
 
+        .recipe-options-toggle-btn {
+          flex-shrink: 0;
+          background: rgba(255,255,255,0.07);
+          border: 1px solid rgba(255,255,255,0.14);
+          color: var(--secondary-text-color);
+          border-radius: 999px;
+          width: 42px;
+          height: 42px;
+          font-size: 1.05em;
+          cursor: pointer;
+          transition: background 0.15s ease, color 0.15s ease;
+        }
+        .recipe-options-toggle-btn:hover { background: rgba(255,255,255,0.13); color: var(--primary-text-color); }
+        .recipe-options {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 14px;
+          padding: 12px;
+          margin: 10px 0 6px 0;
+        }
+        .recipe-options.collapsed { display: none; }
+        .recipe-options-row { display: flex; gap: 8px; flex-wrap: wrap; }
+        .recipe-options-field {
+          flex: 1;
+          min-width: 120px;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          font-size: 0.8em;
+          color: var(--secondary-text-color);
+        }
+        .recipe-options-field input {
+          padding: 8px 10px;
+          border-radius: 10px;
+          border: 1px solid rgba(255,255,255,0.14);
+          background: rgba(0,0,0,0.15);
+          color: var(--primary-text-color);
+          font: inherit;
+          box-sizing: border-box;
+          color-scheme: dark;
+        }
+        .recipe-options-checkbox {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 0.88em;
+          cursor: pointer;
+        }
+        .recipe-options-checkbox input {
+          width: 17px; height: 17px;
+          accent-color: var(--primary-color);
+          cursor: pointer;
+        }
+
         .stock-card {
           background: linear-gradient(160deg, rgba(255,255,255,0.06), rgba(255,255,255,0.01));
           border: 1px solid rgba(255,255,255,0.10);
@@ -1492,12 +1583,14 @@ return result;
                   : "👨‍🍳 Suggerer des recettes"
               }
             </button>
+            <button class="recipe-options-toggle-btn" id="recipe-options-toggle" title="Options des recettes" aria-expanded="${this._recipeOptionsOpen}">⚙️</button>
           </div>
           ${
             selectedCount > 0
               ? `<button class="clear-selection-btn" id="clear-selection-btn">Effacer la selection (${selectedCount})</button>`
               : ""
           }
+          ${this._renderRecipeOptions()}
 
           ${this._renderPendingItems()}
           ${this._renderManualForm()}
@@ -1588,6 +1681,23 @@ return result;
     const suggestBtn = root.getElementById("suggest-btn");
     if (suggestBtn) {
       suggestBtn.addEventListener("click", () => this._suggestRecipes());
+    }
+
+    const recipeOptionsToggle = root.getElementById("recipe-options-toggle");
+    if (recipeOptionsToggle) {
+      recipeOptionsToggle.addEventListener("click", () => this._toggleRecipeOptions());
+    }
+    const recipeServingsInput = root.getElementById("recipe-servings");
+    if (recipeServingsInput) {
+      recipeServingsInput.addEventListener("input", (e) => { this._recipeOptions.servings = e.target.value; });
+    }
+    const recipeMaxTimeInput = root.getElementById("recipe-max-time");
+    if (recipeMaxTimeInput) {
+      recipeMaxTimeInput.addEventListener("input", (e) => { this._recipeOptions.max_prep_minutes = e.target.value; });
+    }
+    const recipeVegetarianInput = root.getElementById("recipe-vegetarian");
+    if (recipeVegetarianInput) {
+      recipeVegetarianInput.addEventListener("change", (e) => { this._recipeOptions.vegetarian = e.target.checked; });
     }
 
     const stockToggle = root.getElementById("stock-toggle");
