@@ -39,10 +39,13 @@ from .const import (
     ATTR_ITEM_ID,
     ATTR_ITEM_IDS,
     ATTR_MAX_RECIPES,
+    ATTR_MAX_PREP_MINUTES,
     ATTR_NAME,
     ATTR_QUANTITY,
     ATTR_RECIPE_INDEX,
+    ATTR_SERVINGS,
     ATTR_UNIT,
+    ATTR_VEGETARIAN,
     CATEGORIES,
     CONF_GEMINI_API_KEY,
     DATA_LAST_SUGGESTIONS,
@@ -110,6 +113,9 @@ SUGGEST_RECIPES_SCHEMA = vol.Schema(
     {
         vol.Optional(ATTR_ITEM_IDS): [cv.string],
         vol.Optional(ATTR_MAX_RECIPES, default=3): vol.Coerce(int),
+        vol.Optional(ATTR_SERVINGS): vol.All(vol.Coerce(int), vol.Range(min=1, max=20)),
+        vol.Optional(ATTR_VEGETARIAN, default=False): cv.boolean,
+        vol.Optional(ATTR_MAX_PREP_MINUTES): vol.All(vol.Coerce(int), vol.Range(min=5, max=240)),
     }
 )
 
@@ -405,6 +411,9 @@ def _async_register_services(hass: HomeAssistant, entry: ConfigEntry) -> None:
 
         max_recipes = call.data[ATTR_MAX_RECIPES]
         item_ids = call.data.get(ATTR_ITEM_IDS)
+        servings = call.data.get(ATTR_SERVINGS)
+        vegetarian = call.data.get(ATTR_VEGETARIAN, False)
+        max_prep_minutes = call.data.get(ATTR_MAX_PREP_MINUTES)
         if item_ids:
             items = stock.get_items_by_ids(item_ids)
             if not items:
@@ -416,7 +425,13 @@ def _async_register_services(hass: HomeAssistant, entry: ConfigEntry) -> None:
             items = stock.get_items()
 
         try:
-            recipes = await gemini.suggest_recipes(items, max_recipes=max_recipes)
+            recipes = await gemini.suggest_recipes(
+                items,
+                max_recipes=max_recipes,
+                servings=servings,
+                vegetarian=vegetarian,
+                max_prep_minutes=max_prep_minutes,
+            )
         except GeminiError as err:
             raise HomeAssistantError(f"Suggestion de recettes impossible: {err}") from err
 
