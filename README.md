@@ -28,7 +28,7 @@ Suggestions de recettes generees par IA, affichees directement sous le bloc d'ac
 
 - Ajout d'aliments par photo, par micro (reconnaissance vocale en francais) ou manuellement, avec date de peremption obligatoire
 - Gestion du stock : modification, suppression, recherche, tri (nom ou date de peremption)
-- Suggestions de recettes anti-gaspi a partir du stock (ou d'une selection d'aliments), avec temps de preparation estime
+- Suggestions de recettes anti-gaspi a partir du stock (ou d'une selection d'aliments), avec temps de preparation estime, et options facultatives via le bouton ⚙️ (nombre de personnes, vegetarien uniquement, temps de preparation maximum)
 - Validation d'une recette : deduction automatique des ingredients utilises, la recette reste affichee jusqu'a confirmation de fin
 - Categorisation automatique des aliments par mots-cles (fruits & legumes, viandes & poissons, produits laitiers, surgeles, pain & boulangerie, condiments & epices, boissons, epicerie, autres)
 - Section "Aliments selectionnes" epinglee en haut de la liste, qui apparait des qu'un aliment est coche
@@ -54,6 +54,16 @@ Exemples de photos correctement cadrees (nom du produit et DLC lisibles) :
 <img width="300" alt="Exemple de photo : nom du produit et DLC visibles (saucisse de Morteau)" src="screenshots/bb5cc721-photo.jpeg" />
 
 Sans ces informations visibles sur la photo, l'IA peut se tromper sur le nom de l'aliment ou ne pas detecter de date, ce qui oblige a completer les champs manquants a la main.
+
+## Personnaliser les suggestions de recettes
+
+A cote du bouton "👨‍🍳 Suggerer des recettes", un bouton ⚙️ ouvre un petit panneau d'options facultatives, prises en compte par l'IA au moment de generer les recettes :
+
+- **👥 Personnes** : adapte les quantites des recettes pour ce nombre de convives.
+- **⏱️ Temps max (min)** : ecarte les recettes dont le temps de preparation total depasserait cette limite.
+- **🥦 Vegetarien uniquement** : ne propose que des recettes sans viande ni poisson.
+
+Ces champs sont optionnels : laisses vides ou decoches, le comportement est identique a avant (aucune contrainte supplementaire). Comme pour le reste des suggestions, il s'agit de consignes donnees a l'IA et non de garanties absolues — verifiez toujours la recette proposee.
 
 ## Ajouter des aliments par micro
 
@@ -97,7 +107,7 @@ entity_expiring: sensor.bientot_perime
 - `recettes_express.update_item` : modifier un aliment existant
 - `recettes_express.remove_item` : retirer un aliment du stock
 - `recettes_express.add_item_from_photo` : detecter des aliments a partir d'une photo
-- `recettes_express.suggest_recipes` : demander des suggestions de recettes
+- `recettes_express.suggest_recipes` : demander des suggestions de recettes (options facultatives : `servings`, `vegetarian`, `max_prep_minutes`)
 - `recettes_express.accept_recipe` : valider une recette et deduire les ingredients du stock
 
 ## Licence
