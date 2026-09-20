@@ -96,7 +96,7 @@ quantite indiquee ne le permet).
 - Redige des etapes concretes et actionnables (entre 3 et 8 etapes par recette), pour
 quelqu'un qui cuisine chez lui avec du materiel standard.
 - Indique un temps de preparation total approximatif en minutes.
-
+{extra_consignes}
 Avant de repondre, relis chaque etape de chaque recette une par une et verifie qu'aucun
 ingredient mentionne n'est absent de la liste des aliments disponibles ou des bases de
 cuisine autorisees listees ci-dessus. Si c'est le cas, corrige ou reformule l'etape pour
@@ -379,7 +379,12 @@ class GeminiClient:
         return _normalize_detected_items(result.get("items"))
 
     async def suggest_recipes(
-        self, stock_items: list[dict[str, Any]], max_recipes: int = 3
+        self,
+        stock_items: list[dict[str, Any]],
+        max_recipes: int = 3,
+        servings: int | None = None,
+        vegetarian: bool = False,
+        max_prep_minutes: int | None = None,
     ) -> list[dict[str, Any]]:
         """Demande a Gemini de proposer des recettes a partir du stock fourni."""
         stock_list = "\n".join(
@@ -388,7 +393,24 @@ class GeminiClient:
             for i in stock_items
         ) or "(stock vide)"
 
-        prompt = RECIPE_PROMPT_TEMPLATE.format(stock_list=stock_list, max_recipes=max_recipes)
+        extra_lines = []
+        if servings:
+            extra_lines.append(f"- Prevois les quantites pour {servings} personne(s).")
+        if vegetarian:
+            extra_lines.append(
+                "- Ne propose que des recettes vegetariennes (sans viande ni poisson)."
+            )
+        if max_prep_minutes:
+            extra_lines.append(
+                f"- Le temps de preparation total ne doit pas depasser {max_prep_minutes} minutes."
+            )
+        extra_consignes = ("\n".join(extra_lines) + "\n") if extra_lines else ""
+
+        prompt = RECIPE_PROMPT_TEMPLATE.format(
+            stock_list=stock_list,
+            max_recipes=max_recipes,
+            extra_consignes=extra_consignes,
+        )
         text = await self._generate(GEMINI_TEXT_MODEL, [{"text": prompt}], thinking_level="low")
         result = _extract_json(text)
         valid_ids = {
