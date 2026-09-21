@@ -193,7 +193,7 @@ def _normalize_detected_items(raw: Any) -> list[dict[str, Any]]:
         if unit not in UNITS:
             unit = "piece"
         expiration_date = entry.get("expiration_date")
-        expiration_date = expiration_date.strip() if isinstance(expiration_date, str) else None
+        expiration_date = (expiration_date.strip() or None) if isinstance(expiration_date, str) else None
         if expiration_date:
             try:
                 date.fromisoformat(expiration_date)
