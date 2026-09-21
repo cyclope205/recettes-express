@@ -30,12 +30,16 @@ Pour la date de peremption (DLC/DDM) de chaque aliment :
   estimation que l'utilisateur pourra corriger, mieux vaut une estimation raisonnable
   qu'une absence de date.
 - Ne mets null que si l'aliment lui-meme est ambigu au point de ne pouvoir rien estimer.
+- Indique aussi si cette date est imprimee sur l'emballage ("printed") ou si tu l'as
+  estimee toi-meme ("estimated"), dans le champ expiration_source (null si expiration_date
+  est null).
 
 Reponds UNIQUEMENT avec un JSON valide (pas de texte autour, pas de markdown), au format :
 {{
   "items": [
     {{"name": "nom de l'aliment", "quantity": 1, "unit": "piece",
      "expiration_date": "YYYY-MM-DD ou null",
+     "expiration_source": "printed ou estimated (null si expiration_date est null)",
      "category": "une valeur parmi fruits_legumes, viandes_poissons, produits_laitiers, boissons, epicerie, autres"}}
   ]
 }}
@@ -54,6 +58,9 @@ Pour la date de peremption (DLC/DDM) de chaque aliment :
 - Si aucune date n'est mentionnee, NE METS PAS null : estime plutot une date de peremption
   raisonnable a partir d'aujourd'hui, en te basant sur la duree de conservation typique de cet
   aliment a temperature ambiante ou au frigo selon ce qui est le plus probable.
+- Indique aussi si cette date a ete explicitement mentionnee ("printed") ou si tu l'as
+  estimee toi-meme ("estimated"), dans le champ expiration_source (null si expiration_date
+  est null).
 
 Si la quantite n'est pas mentionnee, utilise 1. Si l'unite n'est pas mentionnee, utilise "piece".
 Pour la categorie, choisis la plus appropriee parmi : fruits_legumes, viandes_poissons,
@@ -64,6 +71,7 @@ Reponds UNIQUEMENT avec un JSON valide (pas de texte autour, pas de markdown), a
   "items": [
     {{"name": "nom de l'aliment", "quantity": 1, "unit": "piece",
      "expiration_date": "YYYY-MM-DD ou null",
+     "expiration_source": "printed ou estimated (null si expiration_date est null)",
      "categorie": "une valeur parmi fruits_legumes|viandes_poissons|produits_laitiers|surgeles|pain_boulangerie|condiments_epices|boissons|epicerie|autres"}}
   ]
 }}
@@ -185,8 +193,20 @@ def _normalize_detected_items(raw: Any) -> list[dict[str, Any]]:
         if unit not in UNITS:
             unit = "piece"
         expiration_date = entry.get("expiration_date")
-        if not isinstance(expiration_date, str) or not expiration_date.strip():
-            expiration_date = None
+        expiration_date = expiration_date.strip() if isinstance(expiration_date, str) else None
+        if expiration_date:
+            try:
+                date.fromisoformat(expiration_date)
+            except ValueError:
+                _LOGGER.warning(
+                    "Date de peremption '%s' invalide (format attendu YYYY-MM-DD) pour '%s', ignoree",
+                    expiration_date,
+                    name,
+                )
+                expiration_date = None
+        expiration_source = _coerce_str(entry.get("expiration_source")) or None
+        if expiration_source not in ("printed", "estimated"):
+            expiration_source = "estimated" if expiration_date else None
         category = entry.get("category")
         if not isinstance(category, str) or not is_valid_category(category):
             category = guess_category(name)
@@ -196,6 +216,7 @@ def _normalize_detected_items(raw: Any) -> list[dict[str, Any]]:
                 "quantity": _coerce_number(entry.get("quantity"), 1.0),
                 "unit": unit,
                 "expiration_date": expiration_date,
+                "expiration_source": expiration_source,
                 "category": category,
             }
         )
