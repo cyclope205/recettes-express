@@ -530,6 +530,11 @@ class RecettesExpressCard extends HTMLElement {
     this._render();
   }
 
+  _hasActiveRecipeOptions() {
+    const opts = this._recipeOptions;
+    return !!(opts.servings || opts.max_prep_minutes || opts.vegetarian);
+  }
+
   _toggleRecipeOptions() {
     this._recipeOptionsOpen = !this._recipeOptionsOpen;
     this._render();
@@ -1082,16 +1087,31 @@ return result;
         .clear-selection-btn:hover { text-decoration: underline; }
 
         .recipe-options-toggle-btn {
+          position: relative;
           flex-shrink: 0;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
           background: rgba(255,255,255,0.07);
           border: 1px solid rgba(255,255,255,0.14);
           color: var(--secondary-text-color);
           border-radius: 999px;
-          width: 42px;
+          padding: 0 14px;
           height: 42px;
-          font-size: 1.05em;
+          font-size: 0.92em;
+          font-weight: 700;
           cursor: pointer;
           transition: background 0.15s ease, color 0.15s ease;
+        }
+        .recipe-options-toggle-btn.has-active-options::after {
+          content: "";
+          position: absolute;
+          top: 4px;
+          right: 4px;
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: #3fb37f;
         }
         .recipe-options-toggle-btn:hover { background: rgba(255,255,255,0.13); color: var(--primary-text-color); }
         .recipe-options {
@@ -1583,7 +1603,7 @@ return result;
                   : "👨‍🍳 Suggerer des recettes"
               }
             </button>
-            <button class="recipe-options-toggle-btn" id="recipe-options-toggle" title="Options des recettes" aria-expanded="${this._recipeOptionsOpen}">⚙️</button>
+            <button class="recipe-options-toggle-btn${this._hasActiveRecipeOptions() ? " has-active-options" : ""}" id="recipe-options-toggle" title="Options des recettes" aria-expanded="${this._recipeOptionsOpen}">⚙️ Options</button>
           </div>
           ${
             selectedCount > 0
