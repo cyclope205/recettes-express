@@ -102,6 +102,7 @@ def test_normalize_detected_items_valid_entry():
             "quantity": 3,
             "unit": "piece",
             "expiration_date": "2026-01-01",
+            "expiration_source": "estimated",
             "category": "fruits_legumes",
         }
     ]
