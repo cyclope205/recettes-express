@@ -55,6 +55,8 @@ Exemples de photos correctement cadrees (nom du produit et DLC lisibles) :
 
 Sans ces informations visibles sur la photo, l'IA peut se tromper sur le nom de l'aliment ou ne pas detecter de date, ce qui oblige a completer les champs manquants a la main.
 
+Si la date de peremption n'est pas lisible sur la photo, l'IA peut aussi l'estimer a partir du type de produit plutot que de la lire telle quelle. Dans ce cas, l'aliment ajoute au stock precise si la date vient de l'emballage ("imprimee") ou d'une estimation de l'IA ("estimee"), pour savoir quand la verifier vous-meme.
+
 ## Personnaliser les suggestions de recettes
 
 A cote du bouton "👨‍🍳 Suggerer des recettes", un bouton ⚙️ ouvre un petit panneau d'options facultatives, prises en compte par l'IA au moment de generer les recettes :
@@ -63,7 +65,7 @@ A cote du bouton "👨‍🍳 Suggerer des recettes", un bouton ⚙️ ouvre un 
 - **⏱️ Temps max (min)** : ecarte les recettes dont le temps de preparation total depasserait cette limite.
 - **🥦 Vegetarien uniquement** : ne propose que des recettes sans viande ni poisson.
 
-Ces champs sont optionnels : laisses vides ou decoches, le comportement est identique a avant (aucune contrainte supplementaire). Comme pour le reste des suggestions, il s'agit de consignes donnees a l'IA et non de garanties absolues — verifiez toujours la recette proposee.
+Ces champs sont optionnels : laisses vides ou decoches, le comportement est identique a avant (aucune contrainte supplementaire). Comme pour le reste des suggestions, il s'agit de consignes donnees a l'IA et non de garanties absolues — verifiez toujours la recette proposee. Un garde-fou verifie chaque recette suggeree avant affichage : toute recette qui mentionnerait un ingredient absent du stock (hors basiques courants comme sel, huile ou eau) est automatiquement ecartee.
 
 <img width="380" alt="Recettes Express - options de suggestion de recettes (personnes, vegetarien, temps max)" src="https://github.com/user-attachments/assets/1c06f812-b905-4a3e-8b87-ff22f950d43a" />
 
