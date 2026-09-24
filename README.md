@@ -15,14 +15,14 @@ Integration Home Assistant pour gerer le stock d'aliments (frigo, garde-manger) 
 
 ## Captures d’ecran
 
----
 ### ☕ Merci aux donateurs
 
 <!--START_SECTION:buy-me-a-coffee-->
-<div>
-<!-- Les nouveaux dons seront ajoutés ici automatiquement -->
-</div>
 <!--END_SECTION:buy-me-a-coffee-->
+
+
+---
+
 
 Vue d'ensemble : bloc d'actions (photo, ajout manuel) et recettes suggerees juste sous l'entete, aliments a suivre en dessous :
 
