@@ -16,6 +16,14 @@ Integration Home Assistant pour gerer le stock d'aliments (frigo, garde-manger) 
 ## Captures d’ecran
 
 ---
+### ☕ Merci aux donateurs
+
+<!--START_SECTION:buy-me-a-coffee-->
+<div>
+<!-- Les nouveaux dons seront ajoutés ici automatiquement -->
+</div>
+<!--END_SECTION:buy-me-a-coffee-->
+
 Vue d'ensemble : bloc d'actions (photo, ajout manuel) et recettes suggerees juste sous l'entete, aliments a suivre en dessous :
 
 <img width="460" alt="Recettes Express - accueil" src="screenshots/84f87155-FullSizeRender.jpeg" />
@@ -115,7 +123,7 @@ entity_expiring: sensor.bientot_perime
 - `recettes_express.suggest_recipes` : demander des suggestions de recettes (options facultatives : `servings`, `vegetarian`, `max_prep_minutes`)
 - `recettes_express.accept_recipe` : valider une recette et deduire les ingredients du stock
 
-\n\n<!--START_SECTION:buy-me-a-coffee-->\n### ☕ Merci aux donateurs\n\n<!--END_SECTION:buy-me-a-coffee-->\n\n## Licence
+\n\n\n\n## Licence
 
 MIT — voir [LICENSE](LICENSE).
 
