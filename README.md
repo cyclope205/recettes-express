@@ -6,7 +6,7 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![HACS: Custom](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 
-[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-cyclope205-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/cyclope205)
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-cyclope205-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://changelog-traduction.vercel.app/api/donate?repo=recettes-express)
 [![PayPal](https://img.shields.io/badge/PayPal-Donate-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://paypal.me/cyclope205)
 <img src="custom_components/recettes_express/brand/icon.png" alt="Recettes Express" width="32">
 
@@ -115,7 +115,7 @@ entity_expiring: sensor.bientot_perime
 - `recettes_express.suggest_recipes` : demander des suggestions de recettes (options facultatives : `servings`, `vegetarian`, `max_prep_minutes`)
 - `recettes_express.accept_recipe` : valider une recette et deduire les ingredients du stock
 
-## Licence
+\n\n<!--START_SECTION:buy-me-a-coffee-->\n### ☕ Merci aux donateurs\n\n<!--END_SECTION:buy-me-a-coffee-->\n\n## Licence
 
 MIT — voir [LICENSE](LICENSE).
 
@@ -126,7 +126,7 @@ MIT — voir [LICENSE](LICENSE).
 
 Si elle te fait gagner du temps, un petit don est toujours apprecie : ca m'aide a maintenir le projet et a ajouter de nouvelles fonctionnalites.
 
-<a href="https://buymeacoffee.com/cyclope205"><img src="https://img.shields.io/badge/Buy%20Me%20A%20Coffee-cyclope205-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black" alt="Buy Me A Coffee"></a>
+<a href="https://changelog-traduction.vercel.app/api/donate?repo=recettes-express"><img src="https://img.shields.io/badge/Buy%20Me%20A%20Coffee-cyclope205-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black" alt="Buy Me A Coffee"></a>
 <a href="https://paypal.me/cyclope205"><img src="https://img.shields.io/badge/PayPal-Donate-00457C?style=for-the-badge&logo=paypal&logoColor=white" alt="PayPal"></a>
 
 </div>
