@@ -125,7 +125,7 @@ entity_expiring: sensor.bientot_perime
 - `recettes_express.suggest_recipes` : demander des suggestions de recettes (options facultatives : `servings`, `vegetarian`, `max_prep_minutes`)
 - `recettes_express.accept_recipe` : valider une recette et deduire les ingredients du stock
 
-\n\n\n\n## Licence
+## Licence
 
 MIT — voir [LICENSE](LICENSE).
 
