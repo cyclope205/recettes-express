@@ -6,6 +6,8 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![HACS: Custom](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 
+---
+
 ### ☕ Merci aux donateurs
 
 <!--START_SECTION:buy-me-a-coffee-->
