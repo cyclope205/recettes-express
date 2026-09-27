@@ -178,6 +178,43 @@ class StockManager:
         _LOGGER.debug("Aliment mis a jour: %s", item)
         return True
 
+    async def async_consume_item(self, item_id: str, quantity: float, unit: str) -> bool:
+        """Consomme une quantite precise d un aliment du stock."""
+        if item_id not in self._items:
+            return False
+        if not isinstance(quantity, (int, float)) or isinstance(quantity, bool) or quantity <= 0:
+            return False
+
+        item = self._items[item_id]
+        if item.get("unit") != unit:
+            _LOGGER.warning(
+                "Unite incompatible pour la consommation de %s: stock=%s, recette=%s",
+                item_id,
+                item.get("unit"),
+                unit,
+            )
+            return False
+
+        available = item.get("quantity")
+        if not isinstance(available, (int, float)) or isinstance(available, bool):
+            return False
+        if quantity > available:
+            _LOGGER.warning(
+                "Quantite insuffisante pour %s: disponible=%s, demandee=%s",
+                item_id,
+                available,
+                quantity,
+            )
+            return False
+
+        remaining = available - quantity
+        if remaining <= 1e-9:
+            del self._items[item_id]
+        else:
+            item["quantity"] = remaining
+        await self._async_save()
+        return True
+
     async def async_remove_item(self, item_id: str) -> bool:
         """Supprime un aliment du stock. Retourne False si introuvable."""
         if item_id not in self._items:
