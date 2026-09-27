@@ -448,10 +448,19 @@ def _async_register_services(hass: HomeAssistant, entry: ConfigEntry) -> None:
             raise HomeAssistantError("Index de recette invalide (relancez suggest_recipes)")
 
         recipe = suggestions[index]
-        removed_count = 0
-        for item_id in recipe.get("used_item_ids", []):
-            if await stock.async_remove_item(item_id):
-                removed_count += 1
+        used_items = recipe.get("used_items")
+        if not isinstance(used_items, list) or not used_items:
+            raise HomeAssistantError(
+                "Cette suggestion ne contient pas les quantites des ingredients. "
+                "Relancez suggest_recipes avant de la valider."
+            )
+
+        removed_count = await stock.async_consume_items(used_items)
+        if removed_count != len(used_items):
+            raise HomeAssistantError(
+                "Impossible de valider la recette : stock insuffisant, unite incompatible "
+                "ou ingredient introuvable. Aucun aliment n'a ete modifie."
+            )
 
         return {"accepted": recipe["title"], "removed_count": removed_count}
 
