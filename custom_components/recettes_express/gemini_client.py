@@ -110,15 +110,14 @@ ingredient mentionne n'est absent de la liste des aliments disponibles ou des ba
 cuisine autorisees listees ci-dessus. Si c'est le cas, corrige ou reformule l'etape pour
 retirer cet ingredient avant de repondre.
 
-Pour chaque recette, indique quels aliments de la liste sont utilises en donnant leur
-identifiant EXACT (le code entre crochets, pas leur nom) dans "used_item_ids".
+Pour chaque recette, indique les aliments de la liste reellement consommes avec leur identifiant EXACT (le code entre crochets), la quantite utilisee et l unite EXACTE du stock. La quantite doit etre strictement positive et ne jamais depasser la quantite disponible. Utilise "used_items" au format : [{"item_id": "id1", "quantity": 2, "unit": "piece"}].
 
 Reponds UNIQUEMENT avec un JSON valide (pas de texte autour, pas de markdown), au format :
 {{
 "recipes": [
 {{
 "title": "Nom de la recette",
-"used_item_ids": ["id1", "id2"],
+"used_items": [{"item_id": "id1", "quantity": 2, "unit": "piece"}],
 "prep_minutes": 20,
 "steps": ["Etape 1...", "Etape 2..."]
 }}
@@ -283,6 +282,30 @@ def _normalize_recipes(
         if not title:
             continue
         used_ids_raw = entry.get("used_item_ids")
+        used_items_raw = entry.get("used_items")
+        used_items: list[dict[str, Any]] = []
+        if isinstance(used_items_raw, list):
+            seen_ids: set[str] = set()
+            for used in used_items_raw:
+                if not isinstance(used, dict):
+                    continue
+                item_id = _coerce_str(used.get("item_id"))
+                unit = _coerce_str(used.get("unit"))
+                quantity = used.get("quantity")
+                if (
+                    not item_id
+                    or item_id in seen_ids
+                    or not unit
+                    or unit not in UNITS
+                    or not isinstance(quantity, (int, float))
+                    or isinstance(quantity, bool)
+                    or quantity <= 0
+                ):
+                    continue
+                if valid_item_ids is not None and item_id not in valid_item_ids:
+                    continue
+                seen_ids.add(item_id)
+                used_items.append({"item_id": item_id, "quantity": float(quantity), "unit": unit})
         used_ids = (
             [str(i) for i in used_ids_raw if isinstance(i, (str, int)) and not isinstance(i, bool)]
             if isinstance(used_ids_raw, list)
@@ -312,6 +335,7 @@ def _normalize_recipes(
             {
                 "title": title,
                 "used_item_ids": used_ids,
+                "used_items": used_items,
                 "prep_minutes": _coerce_number(entry.get("prep_minutes"), 0),
                 "steps": steps,
             }
