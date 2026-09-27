@@ -127,6 +127,48 @@ def test_async_update_item_unknown_id_returns_false():
 
 # --- async_remove_item -----------------------------------------------------
 
+def test_async_consume_items_keeps_remainder():
+    manager = _make_manager()
+    item_id = run(manager.async_add_item("Oeufs", 6, "piece", "2026-01-01"))
+    consumed = run(
+        manager.async_consume_items(
+            [{"item_id": item_id, "quantity": 2, "unit": "piece"}]
+        )
+    )
+    assert consumed == 1
+    items = manager.get_items_by_ids([item_id])
+    assert items[0]["quantity"] == 4
+
+
+def test_async_consume_items_removes_item_when_fully_consumed():
+    manager = _make_manager()
+    item_id = run(manager.async_add_item("Oeufs", 2, "piece", "2026-01-01"))
+    consumed = run(
+        manager.async_consume_items(
+            [{"item_id": item_id, "quantity": 2, "unit": "piece"}]
+        )
+    )
+    assert consumed == 1
+    assert manager.get_items_by_ids([item_id]) == []
+
+
+def test_async_consume_items_is_atomic_when_one_ingredient_is_invalid():
+    manager = _make_manager()
+    eggs_id = run(manager.async_add_item("Oeufs", 6, "piece", "2026-01-01"))
+    milk_id = run(manager.async_add_item("Lait", 1, "l", "2026-01-01"))
+    consumed = run(
+        manager.async_consume_items(
+            [
+                {"item_id": eggs_id, "quantity": 2, "unit": "piece"},
+                {"item_id": milk_id, "quantity": 2, "unit": "l"},
+            ]
+        )
+    )
+    assert consumed == 0
+    assert manager.get_items_by_ids([eggs_id])[0]["quantity"] == 6
+    assert manager.get_items_by_ids([milk_id])[0]["quantity"] == 1
+
+
 
 def test_async_remove_item_removes_and_returns_true():
     manager = _make_manager()
