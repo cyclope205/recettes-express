@@ -151,6 +151,31 @@ def test_normalize_detected_items_null_expiration_date_stays_none():
 # --- _normalize_recipes -----------------------------------------------------
 
 
+def test_normalize_recipes_preserves_used_quantities():
+    recipes = _normalize_recipes(
+        [{"title": "Omelette", "used_items": [
+            {"item_id": "eggs", "quantity": 2, "unit": "piece"},
+            {"item_id": "milk", "quantity": 0.1, "unit": "l"},
+        ], "steps": ["Cuire"]}],
+        valid_item_ids={"eggs", "milk"},
+    )
+    assert recipes[0]["used_items"] == [
+        {"item_id": "eggs", "quantity": 2.0, "unit": "piece"},
+        {"item_id": "milk", "quantity": 0.1, "unit": "l"},
+    ]
+
+
+def test_normalize_recipes_rejects_invalid_used_quantities():
+    recipes = _normalize_recipes(
+        [{"title": "Omelette", "used_items": [
+            {"item_id": "eggs", "quantity": 0, "unit": "piece"},
+            {"item_id": "milk", "quantity": 1, "unit": "invalid"},
+        ], "steps": ["Cuire"]}],
+        valid_item_ids={"eggs", "milk"},
+    )
+    assert recipes[0]["used_items"] == []
+
+
 def test_normalize_recipes_valid_entry():
     recipes = _normalize_recipes(
         [{"title": "Soupe", "used_item_ids": ["a", "b"], "prep_minutes": 20, "steps": ["Couper", "Cuire"]}],
