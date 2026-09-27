@@ -178,42 +178,54 @@ class StockManager:
         _LOGGER.debug("Aliment mis a jour: %s", item)
         return True
 
-    async def async_consume_item(self, item_id: str, quantity: float, unit: str) -> bool:
-        """Consomme une quantite precise d un aliment du stock."""
-        if item_id not in self._items:
-            return False
-        if not isinstance(quantity, (int, float)) or isinstance(quantity, bool) or quantity <= 0:
-            return False
+    async def async_consume_items(self, consumptions: list[dict[str, Any]]) -> int:
+        """Consomme plusieurs quantites de facon atomique."""
+        if not consumptions:
+            return 0
 
-        item = self._items[item_id]
-        if item.get("unit") != unit:
-            _LOGGER.warning(
-                "Unite incompatible pour la consommation de %s: stock=%s, recette=%s",
-                item_id,
-                item.get("unit"),
-                unit,
-            )
-            return False
+        normalized: list[tuple[str, float, str]] = []
+        seen_ids: set[str] = set()
+        for consumption in consumptions:
+            item_id = consumption.get("item_id")
+            quantity = consumption.get("quantity")
+            unit = consumption.get("unit")
+            if (
+                not isinstance(item_id, str)
+                or not item_id
+                or item_id in seen_ids
+                or not isinstance(quantity, (int, float))
+                or isinstance(quantity, bool)
+                or quantity <= 0
+                or not isinstance(unit, str)
+                or not unit
+            ):
+                return 0
+            seen_ids.add(item_id)
+            normalized.append((item_id, float(quantity), unit))
 
-        available = item.get("quantity")
-        if not isinstance(available, (int, float)) or isinstance(available, bool):
-            return False
-        if quantity > available:
-            _LOGGER.warning(
-                "Quantite insuffisante pour %s: disponible=%s, demandee=%s",
-                item_id,
-                available,
-                quantity,
-            )
-            return False
+        # Valider toutes les consommations avant de modifier le moindre item.
+        for item_id, quantity, unit in normalized:
+            item = self._items.get(item_id)
+            if item is None or item.get("unit") != unit:
+                return 0
+            available = item.get("quantity")
+            if (
+                not isinstance(available, (int, float))
+                or isinstance(available, bool)
+                or quantity > available
+            ):
+                return 0
 
-        remaining = available - quantity
-        if remaining <= 1e-9:
-            del self._items[item_id]
-        else:
-            item["quantity"] = remaining
+        for item_id, quantity, _unit in normalized:
+            item = self._items[item_id]
+            remaining = item["quantity"] - quantity
+            if remaining <= 1e-9:
+                del self._items[item_id]
+            else:
+                item["quantity"] = remaining
+
         await self._async_save()
-        return True
+        return len(normalized)
 
     async def async_remove_item(self, item_id: str) -> bool:
         """Supprime un aliment du stock. Retourne False si introuvable."""
