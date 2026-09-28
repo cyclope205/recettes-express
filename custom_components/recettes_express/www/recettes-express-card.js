@@ -200,6 +200,11 @@ class RecettesExpressCard extends HTMLElement {
     return "badge-ok";
   }
 
+    _isExpired(dateStr) {
+    const days = this._daysUntil(dateStr);
+    return days !== null && days < 0;
+  }
+
   _recipeEmoji(title) {
     const t = (title || "").toLowerCase();
     const rules = [
@@ -430,6 +435,8 @@ class RecettesExpressCard extends HTMLElement {
   }
 
   _toggleItemSelected(itemId) {
+    const _ti = (this._lastStockItems || []).find((i) => i.id === itemId);
+    if (_ti && this._isExpired(_ti.expiration_date)) return;
     if (this._selectedItemIds.has(itemId)) {
       this._selectedItemIds.delete(itemId);
     } else {
@@ -439,6 +446,7 @@ class RecettesExpressCard extends HTMLElement {
   }
 
   _setSelection(items, select) {
+    if (select) items = items.filter((item) => !this._isExpired(item.expiration_date));
     items.forEach((item) => {
       if (select) this._selectedItemIds.add(item.id);
       else this._selectedItemIds.delete(item.id);
@@ -448,7 +456,7 @@ class RecettesExpressCard extends HTMLElement {
 
   _selectExpiringItems() {
     const expiring = (this._hass && this._getEntityItems(this._config.entity_expiring)) || [];
-    expiring.forEach((item) => this._selectedItemIds.add(item.id));
+    expiring.forEach((item) => { if (!this._isExpired(item.expiration_date)) this._selectedItemIds.add(item.id); });
     this._render();
   }
 
@@ -719,17 +727,20 @@ return result;
     type="checkbox"
     class="item-select-checkbox"
     data-item-id="${item.id}"
-    ${this._selectedItemIds.has(item.id) ? "checked" : ""}
+    ${this._selectedItemIds.has(item.id) ? "checked" : ""} ${this._isExpired(item.expiration_date) ? "disabled" : ""}
     title="Selectionner pour une suggestion de recette"
     />
     <div class="stock-row-main">
-    <span class="stock-name">${this._escapeHtml(item.name)}</span>
+    <span class="stock-name ${this._isExpired(item.expiration_date) ? "expired-name" : ""}">${this._escapeHtml(item.name)}</span>
+    ${this._isExpired(item.expiration_date) ? `<div class="expired-hint">Ne peut plus etre consomme</div>` : ""}
     <span class="stock-qty">${this._escapeHtml(item.quantity)} ${this._escapeHtml(item.unit)}</span>
     </div>
     <div class="stock-row-side">
     ${
     item.expiration_date
-    ? `<span class="badge ${this._expiryBadgeClass(item.expiration_date)}">${item.expiration_date}</span>`
+    ? this._isExpired(item.expiration_date)
+    ? `<span class="badge badge-expired">Perime</span>`
+    : `<span class="badge ${this._expiryBadgeClass(item.expiration_date)}">${item.expiration_date}</span>`
     : ""
     }
     <button class="icon-btn edit-item-btn" data-item-id="${item.id}" title="Modifier">✏️</button>
@@ -904,7 +915,16 @@ return result;
               ${recipe.prep_minutes ? `<span class="recipe-time">⏱️ ${recipe.prep_minutes} min</span>` : ""}
             </div>
           </div>
-          <ol class="recipe-steps">${steps}
+          ${
+  recipe.used_items && recipe.used_items.length > 0
+    ? `<ul class="recipe-ingredients">${recipe.used_items.map((u) => {
+        const si = (this._lastStockItems || []).find((s) => s.id === u.item_id);
+        const label = si ? si.name : u.item_id;
+        return `<li>${this._escapeHtml(u.quantity)} ${this._escapeHtml(u.unit)} — ${this._escapeHtml(label)}</li>`;
+      }).join("")}</ul>`
+    : ""
+}
+<ol class="recipe-steps">${steps}
           </ol>
           ${
             recipe._accepted
@@ -1283,6 +1303,13 @@ return result;
         .badge-ok {
           background: rgba(76, 175, 80, 0.16); color: #81c995;
         }
+        .badge-expired {
+          background: rgba(158, 158, 158, 0.22); color: #cfd8dc;
+        }
+        .expired-name { text-decoration: line-through; opacity: 0.65; }
+        .expired-hint { color: #ff8a80; font-size: 0.74em; font-weight: 700; margin-top: 2px; }
+        .recipe-ingredients { list-style: none; margin: 0; padding: 10px 16px 0 16px; display: flex; flex-wrap: wrap; gap: 6px; }
+        .recipe-ingredients li { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14); border-radius: 999px; padding: 4px 10px; font-size: 0.78em; font-weight: 600; }
 
         .icon-btn {
           background: none; border: none; cursor: pointer;
