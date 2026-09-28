@@ -4,6 +4,7 @@ from __future__ import annotations
 import base64
 import json
 import logging
+from datetime import date
 from pathlib import Path
 
 import voluptuous as vol
@@ -423,6 +424,23 @@ def _async_register_services(hass: HomeAssistant, entry: ConfigEntry) -> None:
                 )
         else:
             items = stock.get_items()
+
+        # Un aliment perime (DLC depassee) ne doit jamais etre propose par
+        # l'IA : au-dela du gaspillage, c'est un risque pour la securite
+        # alimentaire. On l'exclut ici cote code, independamment de ce que
+        # la carte a pu envoyer, plutot que de compter uniquement sur le
+        # filtrage cote interface.
+        today_iso = date.today().isoformat()
+        items = [
+            item
+            for item in items
+            if not (item.get("expiration_date") and item["expiration_date"] < today_iso)
+        ]
+        if item_ids and not items:
+            raise HomeAssistantError(
+                "Tous les aliments selectionnes sont perimes et ne peuvent pas "
+                "etre utilises dans une recette."
+            )
 
         try:
             recipes = await gemini.suggest_recipes(
