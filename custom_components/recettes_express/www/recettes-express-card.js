@@ -45,6 +45,7 @@ class RecettesExpressCard extends HTMLElement {
     this._editItem = { name: "", quantity: 1, unit: "piece", expiration_date: "" };
     this._recipeOptions = { servings: "", vegetarian: false, max_prep_minutes: "" };
     this._recipeOptionsOpen = false;
+    this._optimisticStock = null;
     this._render();
   }
 
@@ -66,6 +67,7 @@ class RecettesExpressCard extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
+    this._optimisticStock = null;
     if (this._capturingPhoto) {
       return;
     }
@@ -501,6 +503,17 @@ class RecettesExpressCard extends HTMLElement {
         true
       );
       const removedCount = (result && result.response && result.response.removed_count) || 0;
+      if (removedCount > 0 && recipe.used_items) {
+        const items = (this._lastStockItems || []).map((it) => ({ ...it }));
+        recipe.used_items.forEach((u) => {
+          const target = items.find((it) => it.id === u.item_id);
+          if (target) {
+            const remaining = target.quantity - u.quantity;
+            target.quantity = remaining > 0 ? remaining : 0;
+          }
+        });
+        this._optimisticStock = items.filter((it) => it.quantity > 0);
+      }
       recipe._accepted = true;
       recipe._removedCount = removedCount;
       this._recipes = this._recipes.filter((r) => r === recipe);
@@ -699,6 +712,7 @@ return result;
   }
 
     _getEntityItems(entityId) {
+    if (entityId === this._config.entity_stock && this._optimisticStock) return this._optimisticStock;
     const state = this._hass && this._hass.states[entityId];
     if (!state) return null;
     return state.attributes.items || [];
@@ -732,14 +746,14 @@ return result;
     />
     <div class="stock-row-main">
     <span class="stock-name ${this._isExpired(item.expiration_date) ? "expired-name" : ""}">${this._escapeHtml(item.name)}</span>
-    ${this._isExpired(item.expiration_date) ? `<div class="expired-hint">Ne peut plus etre consomme</div>` : ""}
+    ${this._isExpired(item.expiration_date) ? `<div class="expired-hint">Ne peut plus être consommé</div>` : ""}
     <span class="stock-qty">${this._escapeHtml(item.quantity)} ${this._escapeHtml(item.unit)}</span>
     </div>
     <div class="stock-row-side">
     ${
     item.expiration_date
     ? this._isExpired(item.expiration_date)
-    ? `<span class="badge badge-expired">Perime</span>`
+    ? `<span class="badge badge-expired">Périmé</span>`
     : `<span class="badge ${this._expiryBadgeClass(item.expiration_date)}">${item.expiration_date}</span>`
     : ""
     }
