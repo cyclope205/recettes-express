@@ -110,14 +110,14 @@ ingredient mentionne n'est absent de la liste des aliments disponibles ou des ba
 cuisine autorisees listees ci-dessus. Si c'est le cas, corrige ou reformule l'etape pour
 retirer cet ingredient avant de repondre.
 
-Pour chaque recette, indique les aliments de la liste reellement consommes avec leur identifiant EXACT (le code entre crochets), la quantite utilisee et l unite EXACTE du stock. La quantite doit etre strictement positive et ne jamais depasser la quantite disponible. Utilise "used_items" au format : [{"item_id": "id1", "quantity": 2, "unit": "piece"}].
+Pour chaque recette, indique les aliments de la liste reellement consommes avec leur identifiant EXACT (le code entre crochets), la quantite utilisee et l unite EXACTE du stock. La quantite doit etre strictement positive et ne jamais depasser la quantite disponible. Utilise "used_items" au format : [{{"item_id": "id1", "quantity": 2, "unit": "piece"}}].
 
 Reponds UNIQUEMENT avec un JSON valide (pas de texte autour, pas de markdown), au format :
 {{
 "recipes": [
 {{
 "title": "Nom de la recette",
-"used_items": [{"item_id": "id1", "quantity": 2, "unit": "piece"}],
+"used_items": [{{"item_id": "id1", "quantity": 2, "unit": "piece"}}],
 "prep_minutes": 20,
 "steps": ["Etape 1...", "Etape 2..."]
 }}
