@@ -109,3 +109,40 @@ def test_accept_recipe_raises_and_changes_nothing_when_stock_insufficient():
 
     items = manager.get_items_by_ids([eggs_id])
     assert items[0]["quantity"] == 1
+
+
+def test_accept_recipe_raises_when_recipe_index_out_of_bounds():
+    manager = _make_manager()
+    run(manager.async_add_item("Oeufs", 6, "piece", "2026-01-01"))
+
+    recipe = {
+        "title": "Omelette",
+        "used_items": [{"item_id": "whatever", "quantity": 2, "unit": "piece"}],
+    }
+    registered = _register_and_capture(manager, [recipe])
+
+    call = MagicMock()
+    call.data = {ATTR_RECIPE_INDEX: 5}
+    try:
+        run(registered[SERVICE_ACCEPT_RECIPE](call))
+        assert False, "should have raised HomeAssistantError"
+    except HomeAssistantError:
+        pass
+
+def test_accept_recipe_raises_when_recipe_index_negative():
+    manager = _make_manager()
+    run(manager.async_add_item("Oeufs", 6, "piece", "2026-01-01"))
+
+    recipe = {
+        "title": "Omelette",
+        "used_items": [{"item_id": "whatever", "quantity": 2, "unit": "piece"}],
+    }
+    registered = _register_and_capture(manager, [recipe])
+
+    call = MagicMock()
+    call.data = {ATTR_RECIPE_INDEX: -1}
+    try:
+        run(registered[SERVICE_ACCEPT_RECIPE](call))
+        assert False, "should have raised HomeAssistantError"
+    except HomeAssistantError:
+        pass
