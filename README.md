@@ -129,6 +129,7 @@ entity_expiring: sensor.bientot_perime
 - `recettes_express.update_item` : modifier un aliment existant
 - `recettes_express.remove_item` : retirer un aliment du stock
 - `recettes_express.add_item_from_photo` : detecter des aliments a partir d'une photo
+- `recettes_express.add_item_from_voice` : detecter des aliments a partir d'un enregistrement vocal
 - `recettes_express.suggest_recipes` : demander des suggestions de recettes (options facultatives : `servings`, `vegetarian`, `max_prep_minutes`)
 - `recettes_express.accept_recipe` : valider une recette et deduire les ingredients du stock
 
