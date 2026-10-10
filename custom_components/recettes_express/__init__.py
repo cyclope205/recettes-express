@@ -75,7 +75,7 @@ CARD_VERSION = json.loads(_MANIFEST_PATH.read_text())["version"]
 ADD_ITEM_SCHEMA = vol.Schema(
     {
         vol.Required(ATTR_NAME): cv.string,
-        vol.Required(ATTR_QUANTITY): vol.Coerce(float),
+        vol.Required(ATTR_QUANTITY): vol.All(vol.Coerce(float), vol.Range(min=0, min_included=False)),
         vol.Required(ATTR_UNIT): vol.In(UNITS),
         vol.Required(ATTR_EXPIRATION_DATE): cv.string,
         vol.Optional(ATTR_CATEGORY): vol.In(CATEGORIES),
@@ -88,7 +88,7 @@ UPDATE_ITEM_SCHEMA = vol.Schema(
     {
         vol.Required(ATTR_ITEM_ID): cv.string,
         vol.Optional(ATTR_NAME): cv.string,
-        vol.Optional(ATTR_QUANTITY): vol.Coerce(float),
+        vol.Optional(ATTR_QUANTITY): vol.All(vol.Coerce(float), vol.Range(min=0, min_included=False)),
         vol.Optional(ATTR_UNIT): vol.In(UNITS),
         vol.Optional(ATTR_EXPIRATION_DATE): cv.string,
         vol.Optional(ATTR_CATEGORY): vol.In(CATEGORIES),
@@ -289,6 +289,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 SERVICE_REMOVE_ITEM,
                 SERVICE_UPDATE_ITEM,
                 SERVICE_ADD_ITEM_FROM_PHOTO,
+                SERVICE_ADD_ITEM_FROM_VOICE,
                 SERVICE_SUGGEST_RECIPES,
                 SERVICE_ACCEPT_RECIPE,
             ):
