@@ -61,7 +61,11 @@ class StockManager:
             if not isinstance(unit, str) or not unit:
                 continue
             quantity = item.get("quantity")
-            if not isinstance(quantity, (int, float)) or isinstance(quantity, bool):
+            if (
+                not isinstance(quantity, (int, float))
+                or isinstance(quantity, bool)
+                or quantity <= 0
+            ):
                 quantity = 1
             expiration_date = item.get("expiration_date")
             if not isinstance(expiration_date, str) or not expiration_date:
@@ -135,6 +139,8 @@ class StockManager:
         La categorie est optionnelle : si absente ou invalide, elle est
         devinee automatiquement a partir du nom (voir categorize.py).
         """
+        if not isinstance(quantity, (int, float)) or isinstance(quantity, bool) or quantity <= 0:
+            raise ValueError("La quantite doit etre un nombre strictement positif")
         item_id = uuid.uuid4().hex[:8]
         if not category or not is_valid_category(category):
             category = guess_category(name)
@@ -167,6 +173,12 @@ class StockManager:
         if name is not None:
             item["name"] = name
         if quantity is not None:
+            if (
+                not isinstance(quantity, (int, float))
+                or isinstance(quantity, bool)
+                or quantity <= 0
+            ):
+                raise ValueError("La quantite doit etre un nombre strictement positif")
             item["quantity"] = quantity
         if unit is not None:
             item["unit"] = unit
