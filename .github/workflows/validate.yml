@@ -15,12 +15,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: home-assistant/actions/hassfest@master
+      - uses: home-assistant/actions/hassfest@06749dd8c0b54f350bc69c8752456cee498808a3 # master (epingle 2026-10-11)
 
   hacs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: hacs/action@main
+      - uses: hacs/action@1ebf01c408f29afcb6406bd431bc98fd8cbb15aa # main (epingle 2026-10-11)
         with:
           category: integration
