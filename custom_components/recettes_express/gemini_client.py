@@ -1,6 +1,8 @@
 """Client REST minimal pour l'API Gemini (vision + texte)."""
 from __future__ import annotations
 
+import aiohttp
+import asyncio
 import base64
 import json
 import logging
@@ -364,27 +366,50 @@ class GeminiClient:
                 "thinkingConfig": {"thinkingLevel": thinking_level},
             },
         }
-        async with self._session.post(url, json=payload) as resp:
-            if resp.status == 429:
-                retry_delay = None
-                try:
-                    body = await resp.json()
-                    for detail in body.get("error", {}).get("details", []):
-                        if detail.get("@type", "").endswith("RetryInfo"):
-                            retry_delay = detail.get("retryDelay")
-                except (json.JSONDecodeError, AttributeError):
-                    pass
-                msg = "Quota Gemini atteint pour l'instant."
-                if retry_delay:
-                    msg += f" Reessayez dans {retry_delay}."
-                else:
-                    msg += " Reessayez plus tard (le quota gratuit se reinitialise chaque jour)."
-                raise GeminiQuotaError(msg)
-            if resp.status != 200:
-                body = await resp.text()
-                _LOGGER.error("Erreur API Gemini (%s): %s", resp.status, body)
-                raise GeminiError(f"Erreur API Gemini (HTTP {resp.status})")
-            data = await resp.json()
+
+        max_attempts = 2
+        for attempt in range(1, max_attempts + 1):
+            try:
+                async with self._session.post(url, json=payload) as resp:
+                    if resp.status == 429:
+                        retry_delay = None
+                        try:
+                            body = await resp.json()
+                            for detail in body.get("error", {}).get("details", []):
+                                if detail.get("@type", "").endswith("RetryInfo"):
+                                    retry_delay = detail.get("retryDelay")
+                        except (json.JSONDecodeError, AttributeError):
+                            pass
+                        msg = "Quota Gemini atteint pour l'instant."
+                        if retry_delay:
+                            msg += f" Reessayez dans {retry_delay}."
+                        else:
+                            msg += " Reessayez plus tard (le quota gratuit se reinitialise chaque jour)."
+                        raise GeminiQuotaError(msg)
+                    if resp.status >= 500:
+                        body = await resp.text()
+                        _LOGGER.warning(
+                            "Erreur serveur Gemini (%s), tentative %s/%s: %s",
+                            resp.status, attempt, max_attempts, body,
+                        )
+                        if attempt < max_attempts:
+                            await asyncio.sleep(2)
+                            continue
+                        raise GeminiError(f"Erreur API Gemini (HTTP {resp.status})")
+                    if resp.status != 200:
+                        body = await resp.text()
+                        _LOGGER.error("Erreur API Gemini (%s): %s", resp.status, body)
+                        raise GeminiError(f"Erreur API Gemini (HTTP {resp.status})")
+                    data = await resp.json()
+                break
+            except aiohttp.ClientError as err:
+                _LOGGER.warning(
+                    "Erreur reseau Gemini, tentative %s/%s: %s", attempt, max_attempts, err
+                )
+                if attempt < max_attempts:
+                    await asyncio.sleep(2)
+                    continue
+                raise GeminiError(f"Erreur reseau Gemini: {err}") from err
 
         try:
             return data["candidates"][0]["content"]["parts"][0]["text"]
