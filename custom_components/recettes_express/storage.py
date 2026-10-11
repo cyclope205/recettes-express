@@ -67,6 +67,294 @@ class StockManager:
                 or isinstance(quantity, bool)
                 or not math.isfinite(quantity) or quantity <= 0
             ):
+                # Avant : on remplacait silencieusement par 1, ce qui peut
+                # inventer du stock et masquer une corruption des donnees.
+                # On met desormais l'entree en quarantaine (on l'ignore et
+                # on journalise son identifiant) plutot que de deviner une
+                # valeur de remplacement.
+                _LOGGER.warning(
+                    "Entree de stock ignoree (quantite invalide): id=%s",
+                    item_id,
+                )
+                continue
+            expiration_date = item.get("expiration_date")
+            if not isinstance(expiration_date, str) or not expiration_date:
+                expiration_date = None
+            category = item.get("category")
+            if not isinstance(category, str) or not is_valid_category(category):
+                category = guess_category(name)
+            items[item_id] = {
+                "id": item.get("id", item_id),
+                "name": name,
+                "quantity": quantity,
+                "unit": unit,
+                "expiration_date": expiration_date,
+                "added_at": item.get("added_at"),
+                "category": category,
+            }
+
+        if len(items) != len(raw_items):
+            _LOGGER.warning(
+                "%d entree(s) du stock ignorees au chargement (format invalide).",
+                len(raw_items) - len(items),
+            )
+        self._items = items
+
+    async def _async_save(self) -> None:
+        await self._store.async_save({"items": self._items})
+        async_dispatcher_send(self._hass, SIGNAL_STOCK_UPDATED)
+
+    def get_items(self) -> list[dict[str, Any]]:
+        """Retourne tous les aliments, tries par DLC la plus proche."""
+        items = list(self._items.values())
+        return sorted(items, key=lambda i: i.get("expiration_date") or "9999-99-99")
+
+    def get_items_by_ids(self, item_ids: list[str]) -> list[dict[str, Any]]:
+        """Retourne les aliments correspondant aux id fournis (ceux trouves)."""
+        wanted = set(item_ids)
+        return [item for item in self.get_items() if item["id"] in wanted]
+
+    def get_expiring_soon(
+        self, days: int = DEFAULT_EXPIRING_SOON_DAYS
+    ) -> list[dict[str, Any]]:
+        """Retourne les aliments dont la DLC arrive dans les `days` prochains jours."""
+        limit = date.today() + timedelta(days=days)
+        result = []
+        for item in self._items.values():
+            exp = item.get("expiration_date")
+            if not exp:
+                continue
+            try:
+                exp_date = date.fromisoformat(exp)
+            except ValueError:
+                continue
+            if exp_date <= limit:
+                result.append(item)
+        return sorted(result, key=lambda i: i["expiration_date"])
+
+    async def async_add_item(
+        self,
+        name: str,
+        quantity: float,
+        unit: str,
+        expiration_date: str,
+        category: str | None = None,
+    ) -> str:
+        """Ajoute un aliment au stock et retourne son identifiant.
+
+        La DLC est obligatoire (voir ADD_ITEM_SCHEMA cote __init__.py) : le
+        principe du projet est de prioriser l'anti-gaspi par date de
+        peremption, ce qui ne fonctionne que si chaque aliment en a une.
+
+        La categorie est optionnelle : si absente ou invalide, elle est
+        devinee automatiquement a partir du nom (voir categorize.py).
+        """
+        if not isinstance(quantity, (int, float)) or isinstance(quantity, bool) or not math.isfinite(quantity) or quantity <= 0:
+            raise ValueError("La quantite doit etre un nombre strictement positif")
+        item_id = uuid.uuid4().hex[:8]
+        if not category or not is_valid_category(category):
+            category = guess_category(name)
+        self._items[item_id] = {
+            "id": item_id,
+            "name": name,
+            "quantity": quantity,
+            "unit": unit,
+            "expiration_date": expiration_date,
+            "added_at": datetime.now().isoformat(),
+            "category": category,
+        }
+        await self._async_save()
+        _LOGGER.debug("Aliment ajoute au stock: %s", self._items[item_id])
+        return item_id
+
+    async def async_update_item(
+            self,
+            item_id: str,
+            name: str | None = None,
+            quantity: float | None = None,
+            unit: str | None = None,
+            expiration_date: str | None = None,
+            category: str | None = None,
+        ) -> bool:
+        """Met a jour un aliment existant. Retourne False si introuvable."""
+        if item_id not in self._items:
+            return False
+        item = self._items[item_id]
+        if name is not None:
+            item["name"] = name
+        if quantity is not None:
+            if (
+                not isinstance(quantity, (int, float))
+                or isinstance(quantity, bool)
+                or not math.isfinite(quantity) or quantity <= 0
+            ):
+                raise ValueError("La quantite doit etre un nombre strictement positif")
+            item["quantity"] = quantity
+        if unit is not None:
+            item["unit"] = unit
+        if expiration_date is not None:
+            item["expiration_date"] = expiration_date
+        if category is not None and is_valid_category(category):
+            item["category"] = category
+        await self._async_save()
+        _LOGGER.debug("Aliment mis a jour: %s", item)
+        return True
+
+    async def async_consume_items(self, consumptions: list[dict[str, Any]]) -> int:
+        """Consomme plusieurs quantites de facon atomique."""
+        if not consumptions:
+            return 0
+
+        normalized: list[tuple[str, float, str]] = []
+        seen_ids: set[str] = set()
+        for consumption in consumptions:
+            item_id = consumption.get("item_id")
+            quantity = consumption.get("quantity")
+            unit = consumption.get("unit")
+            if (
+                not isinstance(item_id, str)
+                or not item_id
+                or item_id in seen_ids
+                or not isinstance(quantity, (int, float))
+                or isinstance(quantity, bool)
+                or not math.isfinite(quantity) or quantity <= 0
+                or not isinstance(unit, str)
+                or not unit
+            ):
+                return 0
+            seen_ids.add(item_id)
+            normalized.append((item_id, float(quantity), unit))
+
+        # Valider toutes les consommations avant de modifier le moindre item.
+        for item_id, quantity, unit in normalized:
+            item = self._items.get(item_id)
+            if item is None or item.get("unit") != unit:
+                return 0
+            available = item.get("quantity")
+            if (
+                not isinstance(available, (int, float))
+                or isinstance(available, bool)
+                or quantity > available
+            ):
+                return 0
+
+        for item_id, quantity, _unit in normalized:
+            item = self._items[item_id]
+            remaining = item["quantity"] - quantity
+            if remaining <= 1e-9:
+                del self._items[item_id]
+            else:
+                item["quantity"] = remaining
+
+        await self._async_save()
+        return len(normalized)
+
+    async def async_remove_item(self, item_id: str) -> bool:
+        """Supprime un aliment du stock. Retourne False si introuvable."""
+        if item_id not in self._items:
+            return False
+        del self._items[item_id]
+        await self._async_save()
+        return True
+
+
+
+class SuggestionsStore:
+    """Persiste les dernieres recettes suggerees par Gemini.
+
+    Sans cela, accept_recipe dependait uniquement d'une liste gardee en
+    memoire (hass.data) : un redemarrage de Home Assistant entre une
+    suggestion et sa validation faisait perdre les recettes proposees,
+    obligeant a relancer un appel Gemini pour rien.
+    """
+
+    def __init__(self, hass: HomeAssistant) -> None:
+        self._store: Store = Store(hass, STORAGE_VERSION, SUGGESTIONS_STORAGE_KEY)
+        self._recipes: list[dict[str, Any]] = []
+
+    async def async_load(self) -> None:
+        """Charge les dernieres suggestions depuis le disque."""
+        data = await self._store.async_load()
+        recipes = data.get("recipes") if isinstance(data, dict) else None
+        self._recipes = recipes if isinstance(recipes, list) else []
+
+    def get(self) -> list[dict[str, Any]]:
+        """Retourne les dernieres recettes suggerees (liste vide si aucune)."""
+        return self._recipes
+
+    async def async_set(self, recipes: list[dict[str, Any]]) -> None:
+        """Remplace et persiste les dernieres recettes suggerees."""
+        self._recipes = recipes
+        await self._store.async_save({"recipes": recipes})
+"""Gestion du stock d'aliments pour Recettes Express."""
+from __future__ import annotations
+
+import logging
+import math
+import uuid
+from datetime import date, datetime, timedelta
+from typing import Any
+
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.dispatcher import async_dispatcher_send
+from homeassistant.helpers.storage import Store
+
+from .categorize import guess_category, is_valid_category
+from .const import (
+    DEFAULT_EXPIRING_SOON_DAYS,
+    SIGNAL_STOCK_UPDATED,
+    STORAGE_KEY,
+    STORAGE_VERSION,
+    SUGGESTIONS_STORAGE_KEY,
+)
+
+_LOGGER = logging.getLogger(__name__)
+
+
+class StockManager:
+    """Charge, modifie et persiste la liste des aliments en stock."""
+
+    def __init__(self, hass: HomeAssistant) -> None:
+        self._hass = hass
+        self._store: Store = Store(hass, STORAGE_VERSION, STORAGE_KEY)
+        self._items: dict[str, dict[str, Any]] = {}
+
+    async def async_load(self) -> None:
+        """Charge le stock depuis le disque.
+
+        Le fichier de stockage n'est pas garanti d'etre dans le format
+        attendu (ancienne version, edition manuelle, corruption disque...).
+        On valide chaque entree plutot que de faire confiance aveuglement
+        au contenu charge : une entree invalide est ignoree (avec un
+        avertissement) au lieu de planter ou de propager des donnees
+        incoherentes au reste de l'integration.
+        """
+        data = await self._store.async_load()
+        raw_items = data.get("items") if isinstance(data, dict) else None
+        if not isinstance(raw_items, dict):
+            if data is not None:
+                _LOGGER.warning(
+                    "Stock enregistre dans un format inattendu ; demarrage avec un stock vide."
+                )
+            self._items = {}
+            return
+
+        items: dict[str, dict[str, Any]] = {}
+        for item_id, item in raw_items.items():
+            if not isinstance(item_id, str) or not isinstance(item, dict):
+                continue
+            name = item.get("name")
+            unit = item.get("unit")
+            if not isinstance(name, str) or not name:
+                continue
+            if not isinstance(unit, str) or not unit:
+                continue
+            quantity = item.get("quantity")
+            if (
+                not isinstance(quantity, (int, float))
+                or isinstance(quantity, bool)
+                or not math.isfinite(quantity) or quantity <= 0
+            ):
                 quantity = 1
             expiration_date = item.get("expiration_date")
             if not isinstance(expiration_date, str) or not expiration_date:
