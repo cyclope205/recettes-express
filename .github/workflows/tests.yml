@@ -21,3 +21,11 @@ jobs:
           pip install homeassistant pytest
       - name: Run tests
         run: pytest tests/ -v
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Validate frontend JavaScript syntax
+        run: node --check custom_components/recettes_express/www/recettes-express-card.js
