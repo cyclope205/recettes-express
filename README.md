@@ -1,10 +1,15 @@
 # Recettes Express
 
+[![HACS: Custom](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 [![Release](https://img.shields.io/github/v/release/cyclope205/recettes-express)](https://github.com/cyclope205/recettes-express/releases)
 [![Build](https://github.com/cyclope205/recettes-express/actions/workflows/validate.yml/badge.svg)](https://github.com/cyclope205/recettes-express/actions/workflows/validate.yml)
 [![Tests](https://github.com/cyclope205/recettes-express/actions/workflows/tests.yml/badge.svg)](https://github.com/cyclope205/recettes-express/actions/workflows/tests.yml)
+[![Issues](https://img.shields.io/github/issues/cyclope205/recettes-express)](https://github.com/cyclope205/recettes-express/issues)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![HACS: Custom](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
+[![Downloads](https://img.shields.io/github/downloads/cyclope205/recettes-express/total)](https://github.com/cyclope205/recettes-express/releases)
+[![Downloads latest](https://img.shields.io/github/downloads/cyclope205/recettes-express/latest/total)](https://github.com/cyclope205/recettes-express/releases/latest)
+[![Stars](https://img.shields.io/github/stars/cyclope205/recettes-express)](https://github.com/cyclope205/recettes-express/stargazers)
+[![Forks](https://img.shields.io/github/forks/cyclope205/recettes-express)](https://github.com/cyclope205/recettes-express/network/members)
 
 ---
 
