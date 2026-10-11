@@ -250,19 +250,24 @@ def test_async_load_drops_non_dict_entries():
     assert manager.get_items() == []
 
 
-def test_async_load_invalid_quantity_defaults_to_one():
+def test_async_load_invalid_quantity_is_dropped():
+    # Une quantite invalide est desormais mise en quarantaine (log +
+    # entree ignoree) plutot que silencieusement remplacee par 1, pour
+    # eviter d'inventer du stock fictif a partir de donnees corrompues.
     manager = _make_manager()
     manager._store.async_load = AsyncMock(return_value={
         "items": {
+            "ok": {"id": "ok", "name": "Tomate", "quantity": 1, "unit": "piece"},
             "abc": {
-                "id": "abc", "name": "Tomate", "quantity": "beaucoup",
+                "id": "abc", "name": "Patate", "quantity": "beaucoup",
                 "unit": "piece",
-            }
+            },
         }
     })
     run(manager.async_load())
     items = manager.get_items()
-    assert items[0]["quantity"] == 1
+    assert len(items) == 1
+    assert items[0]["name"] == "Tomate"
 
 
 def test_async_load_invalid_expiration_date_becomes_none():
