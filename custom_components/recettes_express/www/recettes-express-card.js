@@ -702,7 +702,7 @@ return result;
             .map((u) => `<option value="${u}" ${u === edit.unit ? "selected" : ""}>${u}</option>`)
             .join("")}
         </select>
-        <input type="date" class="edit-exp" value="${edit.expiration_date}" required />
+        <input type="date" class="edit-exp" value="${this._escapeHtml(edit.expiration_date)}" required />
         <div class="pending-actions">
           <button class="confirm-btn" id="save-edit-btn" title="Enregistrer">✓</button>
           <button class="discard-btn" id="cancel-edit-btn" title="Annuler">✕</button>
@@ -754,7 +754,7 @@ return result;
     item.expiration_date
     ? this._isExpired(item.expiration_date)
     ? `<span class="badge badge-expired">Périmé</span>`
-    : `<span class="badge ${this._expiryBadgeClass(item.expiration_date)}">${item.expiration_date}</span>`
+    : `<span class="badge ${this._expiryBadgeClass(item.expiration_date)}">${this._escapeHtml(item.expiration_date)}</span>`
     : ""
     }
     <button class="icon-btn edit-item-btn" data-item-id="${item.id}" title="Modifier">✏️</button>
@@ -823,7 +823,7 @@ return result;
                 .map((u) => `<option value="${u}" ${u === item.unit ? "selected" : ""}>${u}</option>`)
                 .join("")}
             </select>
-            <input type="date" id="manual-exp" value="${item.expiration_date}" required title="DLC (obligatoire)" />
+            <input type="date" id="manual-exp" value="${this._escapeHtml(item.expiration_date)}" required title="DLC (obligatoire)" />
             <select id="manual-quick-date" class="manual-quick-date" title="Estimer rapidement (produit frais sans date imprimee)">
               <option value="">≈ estimer…</option>
               <option value="3">+ 3 jours</option>
@@ -857,7 +857,7 @@ return result;
               type="date"
               class="pending-exp ${missingDate ? "field-missing" : ""}"
               data-index="${i}"
-              value="${item.expiration_date}"
+              value="${this._escapeHtml(item.expiration_date)}"
               required
               title="DLC (obligatoire)"
             />
