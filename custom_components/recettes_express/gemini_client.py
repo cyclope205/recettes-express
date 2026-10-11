@@ -6,6 +6,7 @@ import asyncio
 import base64
 import json
 import logging
+import math
 import re
 import unicodedata
 from datetime import date
@@ -301,7 +302,7 @@ def _normalize_recipes(
                     or unit not in UNITS
                     or not isinstance(quantity, (int, float))
                     or isinstance(quantity, bool)
-                    or quantity <= 0
+                    or not math.isfinite(quantity) or quantity <= 0
                 ):
                     continue
                 if valid_item_ids is not None and item_id not in valid_item_ids:
