@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import math
 import uuid
 from datetime import date, datetime, timedelta
 from typing import Any
@@ -64,7 +65,7 @@ class StockManager:
             if (
                 not isinstance(quantity, (int, float))
                 or isinstance(quantity, bool)
-                or quantity <= 0
+                or not math.isfinite(quantity) or quantity <= 0
             ):
                 quantity = 1
             expiration_date = item.get("expiration_date")
@@ -139,7 +140,7 @@ class StockManager:
         La categorie est optionnelle : si absente ou invalide, elle est
         devinee automatiquement a partir du nom (voir categorize.py).
         """
-        if not isinstance(quantity, (int, float)) or isinstance(quantity, bool) or quantity <= 0:
+        if not isinstance(quantity, (int, float)) or isinstance(quantity, bool) or not math.isfinite(quantity) or quantity <= 0:
             raise ValueError("La quantite doit etre un nombre strictement positif")
         item_id = uuid.uuid4().hex[:8]
         if not category or not is_valid_category(category):
@@ -176,7 +177,7 @@ class StockManager:
             if (
                 not isinstance(quantity, (int, float))
                 or isinstance(quantity, bool)
-                or quantity <= 0
+                or not math.isfinite(quantity) or quantity <= 0
             ):
                 raise ValueError("La quantite doit etre un nombre strictement positif")
             item["quantity"] = quantity
@@ -207,7 +208,7 @@ class StockManager:
                 or item_id in seen_ids
                 or not isinstance(quantity, (int, float))
                 or isinstance(quantity, bool)
-                or quantity <= 0
+                or not math.isfinite(quantity) or quantity <= 0
                 or not isinstance(unit, str)
                 or not unit
             ):
