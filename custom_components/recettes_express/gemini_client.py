@@ -368,7 +368,7 @@ class GeminiClient:
             },
         }
 
-        max_attempts = 2
+        max_attempts = 3
         for attempt in range(1, max_attempts + 1):
             try:
                 async with self._session.post(url, json=payload) as resp:
@@ -394,7 +394,7 @@ class GeminiClient:
                             resp.status, attempt, max_attempts, body,
                         )
                         if attempt < max_attempts:
-                            await asyncio.sleep(2)
+                            await asyncio.sleep(2 ** attempt)
                             continue
                         raise GeminiError(f"Erreur API Gemini (HTTP {resp.status})")
                     if resp.status != 200:
@@ -408,7 +408,7 @@ class GeminiClient:
                     "Erreur reseau Gemini, tentative %s/%s: %s", attempt, max_attempts, err
                 )
                 if attempt < max_attempts:
-                    await asyncio.sleep(2)
+                    await asyncio.sleep(2 ** attempt)
                     continue
                 raise GeminiError(f"Erreur reseau Gemini: {err}") from err
 
