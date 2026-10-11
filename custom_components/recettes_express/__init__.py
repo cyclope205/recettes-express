@@ -65,7 +65,33 @@ from .storage import StockManager, SuggestionsStore
 
 _LOGGER = logging.getLogger(__name__)
 
+
+def _valid_iso_date(value):
+    """Valide une date AAAA-MM-JJ et la retourne inchangee.
+
+    Rejette toute chaine qui n'est pas une date calendaire reelle. Avant
+    ce correctif, cv.string laissait passer n'importe quelle chaine, ce
+    qui permettait une injection HTML dans la carte et des dates
+    impossibles (ex: 2026-99-99) qui echappaient au filtre de peremption
+    base sur une comparaison de chaines.
+    """
+    if not isinstance(value, str):
+        raise vol.Invalid("La date doit etre une chaine de caracteres")
+    try:
+        date.fromisoformat(value)
+    except ValueError as err:
+        raise vol.Invalid(
+            f"Date invalide (format attendu AAAA-MM-JJ): {value}"
+        ) from err
+    return value
+
 PLATFORMS: list[Platform] = [Platform.SENSOR]
+
+# Plafond de taille pour les entrees image/audio en base64 (avant decodage).
+# Sans cette limite, un appel de service avec un payload enorme peut
+# consommer beaucoup de memoire avant meme d'etre envoye a Gemini.
+MAX_IMAGE_BASE64_CHARS = 10 * 1024 * 1024  # ~7.5 Mo decode
+MAX_AUDIO_BASE64_CHARS = 20 * 1024 * 1024  # ~15 Mo decode
 
 CARD_URL_PATH = "/recettes_express_files"
 CARD_JS_FILENAME = "recettes-express-card.js"
@@ -77,7 +103,7 @@ ADD_ITEM_SCHEMA = vol.Schema(
         vol.Required(ATTR_NAME): cv.string,
         vol.Required(ATTR_QUANTITY): vol.All(vol.Coerce(float), vol.Range(min=0, min_included=False)),
         vol.Required(ATTR_UNIT): vol.In(UNITS),
-        vol.Required(ATTR_EXPIRATION_DATE): cv.string,
+        vol.Required(ATTR_EXPIRATION_DATE): _valid_iso_date,
         vol.Optional(ATTR_CATEGORY): vol.In(CATEGORIES),
     }
 )
@@ -90,7 +116,7 @@ UPDATE_ITEM_SCHEMA = vol.Schema(
         vol.Optional(ATTR_NAME): cv.string,
         vol.Optional(ATTR_QUANTITY): vol.All(vol.Coerce(float), vol.Range(min=0, min_included=False)),
         vol.Optional(ATTR_UNIT): vol.In(UNITS),
-        vol.Optional(ATTR_EXPIRATION_DATE): cv.string,
+        vol.Optional(ATTR_EXPIRATION_DATE): _valid_iso_date,
         vol.Optional(ATTR_CATEGORY): vol.In(CATEGORIES),
     }
 )
@@ -356,6 +382,8 @@ def _async_register_services(hass: HomeAssistant, entry: ConfigEntry) -> None:
         if image_base64:
             if "," in image_base64[:64]:
                 image_base64 = image_base64.split(",", 1)[1]
+            if len(image_base64) > MAX_IMAGE_BASE64_CHARS:
+                raise HomeAssistantError("Image trop volumineuse (plafond depasse).")
             try:
                 image_bytes = base64.b64decode(image_base64)
             except (ValueError, TypeError) as err:
@@ -397,7 +425,12 @@ def _async_register_services(hass: HomeAssistant, entry: ConfigEntry) -> None:
 
         audio_base64 = call.data[ATTR_AUDIO_BASE64]
         mime_type = call.data.get(ATTR_AUDIO_MIME_TYPE, "audio/webm")
-        audio_bytes = base64.b64decode(audio_base64)
+        if len(audio_base64) > MAX_AUDIO_BASE64_CHARS:
+            raise HomeAssistantError("Audio trop volumineux (plafond depasse).")
+        try:
+            audio_bytes = base64.b64decode(audio_base64)
+        except (ValueError, TypeError) as err:
+            raise HomeAssistantError(f"Audio base64 invalide: {err}") from err
 
         try:
             detected_items = await gemini.recognize_food_from_voice(audio_bytes, mime_type)
@@ -431,12 +464,20 @@ def _async_register_services(hass: HomeAssistant, entry: ConfigEntry) -> None:
         # alimentaire. On l'exclut ici cote code, independamment de ce que
         # la carte a pu envoyer, plutot que de compter uniquement sur le
         # filtrage cote interface.
-        today_iso = date.today().isoformat()
-        items = [
-            item
-            for item in items
-            if not (item.get("expiration_date") and item["expiration_date"] < today_iso)
-        ]
+        today = date.today()
+
+        def _is_expired(exp_str):
+            if not exp_str:
+                return False
+            try:
+                return date.fromisoformat(exp_str) < today
+            except (TypeError, ValueError):
+                # Date invalide : on la traite comme perimee par securite
+                # plutot que de la laisser passer via une comparaison de
+                # chaines qui ne valide pas le calendrier (ex: "2026-99-99").
+                return True
+
+        items = [item for item in items if not _is_expired(item.get("expiration_date"))]
         if item_ids and not items:
             raise HomeAssistantError(
                 "Tous les aliments selectionnes sont perimes et ne peuvent pas "
