@@ -1,6 +1,7 @@
 """Integration Recettes Express."""
 from __future__ import annotations
 
+import asyncio
 import base64
 import json
 import logging
@@ -333,6 +334,38 @@ def _get_entry_data(hass: HomeAssistant) -> dict:
     raise HomeAssistantError("Recettes Express n'est pas configure")
 
 
+async def _async_accept_recipe_once(suggestions_store, stock, index: int, lock: asyncio.Lock):
+    """Valide une suggestion une seule fois, meme en cas d'appels concurrents."""
+    async with lock:
+        suggestions = suggestions_store.get()
+        if index < 0 or index >= len(suggestions):
+            raise HomeAssistantError("Index de recette invalide (relancez suggest_recipes)")
+
+        recipe = suggestions[index]
+        if recipe.get("accepted") is True:
+            raise HomeAssistantError("Cette recette a deja ete validee.")
+
+        used_items = recipe.get("used_items")
+        if not isinstance(used_items, list) or not used_items:
+            raise HomeAssistantError(
+                "Cette suggestion ne contient pas les quantites des ingredients. "
+                "Relancez suggest_recipes avant de la valider."
+            )
+
+        removed_count = await stock.async_consume_items(used_items)
+        if removed_count != len(used_items):
+            raise HomeAssistantError(
+                "Impossible de valider la recette : stock insuffisant, unite incompatible "
+                "ou ingredient introuvable. Aucun aliment n'a ete modifie."
+            )
+
+        # Marquer et persister avant de liberer le verrou : un second appel
+        # verra accepted=True et ne pourra pas consommer le stock une seconde fois.
+        recipe["accepted"] = True
+        await suggestions_store.async_set(suggestions)
+        return {"accepted": recipe["title"], "removed_count": removed_count}
+
+
 def _async_register_services(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Enregistre les services (une seule fois pour tout le domaine)."""
     if hass.services.has_service(DOMAIN, SERVICE_ADD_ITEM):
@@ -500,29 +533,13 @@ def _async_register_services(hass: HomeAssistant, entry: ConfigEntry) -> None:
 
     async def handle_accept_recipe(call: ServiceCall) -> ServiceResponse:
         data = _get_entry_data(hass)
-        stock: StockManager = data["stock"]
-        suggestions = data[DATA_LAST_SUGGESTIONS].get()
-
-        index = call.data[ATTR_RECIPE_INDEX]
-        if index < 0 or index >= len(suggestions):
-            raise HomeAssistantError("Index de recette invalide (relancez suggest_recipes)")
-
-        recipe = suggestions[index]
-        used_items = recipe.get("used_items")
-        if not isinstance(used_items, list) or not used_items:
-            raise HomeAssistantError(
-                "Cette suggestion ne contient pas les quantites des ingredients. "
-                "Relancez suggest_recipes avant de la valider."
-            )
-
-        removed_count = await stock.async_consume_items(used_items)
-        if removed_count != len(used_items):
-            raise HomeAssistantError(
-                "Impossible de valider la recette : stock insuffisant, unite incompatible "
-                "ou ingredient introuvable. Aucun aliment n'a ete modifie."
-            )
-
-        return {"accepted": recipe["title"], "removed_count": removed_count}
+        lock = data.setdefault("_accept_recipe_lock", asyncio.Lock())
+        return await _async_accept_recipe_once(
+            data[DATA_LAST_SUGGESTIONS],
+            data["stock"],
+            call.data[ATTR_RECIPE_INDEX],
+            lock,
+        )
 
     hass.services.async_register(DOMAIN, SERVICE_ADD_ITEM, handle_add_item, schema=ADD_ITEM_SCHEMA)
     hass.services.async_register(

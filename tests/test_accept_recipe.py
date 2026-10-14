@@ -39,6 +39,7 @@ def _register_and_capture(manager, suggestions):
     hass = MagicMock()
     suggestions_store = MagicMock()
     suggestions_store.get.return_value = suggestions
+    suggestions_store.async_set = AsyncMock(side_effect=lambda recipes: None)
     hass.data = {
         DOMAIN: {"entry1": {"stock": manager, DATA_LAST_SUGGESTIONS: suggestions_store}}
     }
@@ -129,6 +130,7 @@ def test_accept_recipe_raises_when_recipe_index_out_of_bounds():
     except HomeAssistantError:
         pass
 
+
 def test_accept_recipe_raises_when_recipe_index_negative():
     manager = _make_manager()
     run(manager.async_add_item("Oeufs", 6, "piece", "2026-01-01"))
@@ -144,5 +146,94 @@ def test_accept_recipe_raises_when_recipe_index_negative():
     try:
         run(registered[SERVICE_ACCEPT_RECIPE](call))
         assert False, "should have raised HomeAssistantError"
+    except HomeAssistantError:
+        pass
+
+
+def test_accept_recipe_twice_does_not_consume_stock_twice():
+    manager = _make_manager()
+    eggs_id = run(manager.async_add_item("Oeufs", 6, "piece", "2026-01-01"))
+    recipe = {
+        "title": "Omelette",
+        "used_items": [{"item_id": eggs_id, "quantity": 2, "unit": "piece"}],
+    }
+    registered = _register_and_capture(manager, [recipe])
+    call = MagicMock()
+    call.data = {ATTR_RECIPE_INDEX: 0}
+
+    run(registered[SERVICE_ACCEPT_RECIPE](call))
+    try:
+        run(registered[SERVICE_ACCEPT_RECIPE](call))
+        assert False, "second acceptance should have raised HomeAssistantError"
+    except HomeAssistantError as err:
+        assert "deja ete validee" in str(err)
+
+    assert manager.get_items_by_ids([eggs_id])[0]["quantity"] == 4
+    assert recipe["accepted"] is True
+
+
+def test_accept_recipe_concurrent_calls_consume_stock_once():
+    async def scenario():
+        manager = _make_manager()
+        eggs_id = await manager.async_add_item("Oeufs", 6, "piece", "2026-01-01")
+        recipe = {
+            "title": "Omelette",
+            "used_items": [{"item_id": eggs_id, "quantity": 2, "unit": "piece"}],
+        }
+        registered = _register_and_capture(manager, [recipe])
+        call = MagicMock()
+        call.data = {ATTR_RECIPE_INDEX: 0}
+        results = await asyncio.gather(
+            registered[SERVICE_ACCEPT_RECIPE](call),
+            registered[SERVICE_ACCEPT_RECIPE](call),
+            return_exceptions=True,
+        )
+        assert sum(isinstance(result, dict) for result in results) == 1
+        assert sum(isinstance(result, HomeAssistantError) for result in results) == 1
+        assert manager.get_items_by_ids([eggs_id])[0]["quantity"] == 4
+
+    run(scenario())
+
+
+def test_accept_recipe_does_not_mark_accepted_when_stock_validation_fails():
+    manager = _make_manager()
+    eggs_id = run(manager.async_add_item("Oeufs", 1, "piece", "2026-01-01"))
+    recipe = {
+        "title": "Omelette",
+        "used_items": [{"item_id": eggs_id, "quantity": 2, "unit": "piece"}],
+    }
+    registered = _register_and_capture(manager, [recipe])
+    call = MagicMock()
+    call.data = {ATTR_RECIPE_INDEX: 0}
+
+    try:
+        run(registered[SERVICE_ACCEPT_RECIPE](call))
+        assert False, "insufficient stock should have raised HomeAssistantError"
+    except HomeAssistantError:
+        pass
+
+    assert "accepted" not in recipe
+    assert manager.get_items_by_ids([eggs_id])[0]["quantity"] == 1
+
+
+def test_accept_recipe_keeps_used_items_intact_after_acceptance():
+    manager = _make_manager()
+    eggs_id = run(manager.async_add_item("Oeufs", 6, "piece", "2026-01-01"))
+    recipe = {
+        "title": "Omelette",
+        "used_items": [{"item_id": eggs_id, "quantity": 2, "unit": "piece"}],
+    }
+    registered = _register_and_capture(manager, [recipe])
+    call = MagicMock()
+    call.data = {ATTR_RECIPE_INDEX: 0}
+
+    run(registered[SERVICE_ACCEPT_RECIPE](call))
+
+    assert recipe["accepted"] is True
+    assert recipe["used_items"] == [{"item_id": eggs_id, "quantity": 2, "unit": "piece"}]
+
+    try:
+        run(registered[SERVICE_ACCEPT_RECIPE](call))
+        assert False, "second acceptance should have raised HomeAssistantError"
     except HomeAssistantError:
         pass
