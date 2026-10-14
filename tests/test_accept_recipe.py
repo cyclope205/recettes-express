@@ -130,6 +130,7 @@ def test_accept_recipe_raises_when_recipe_index_out_of_bounds():
     except HomeAssistantError:
         pass
 
+
 def test_accept_recipe_raises_when_recipe_index_negative():
     manager = _make_manager()
     run(manager.async_add_item("Oeufs", 6, "piece", "2026-01-01"))
@@ -147,7 +148,6 @@ def test_accept_recipe_raises_when_recipe_index_negative():
         assert False, "should have raised HomeAssistantError"
     except HomeAssistantError:
         pass
-
 
 
 def test_accept_recipe_twice_does_not_consume_stock_twice():
@@ -214,3 +214,26 @@ def test_accept_recipe_does_not_mark_accepted_when_stock_validation_fails():
 
     assert "accepted" not in recipe
     assert manager.get_items_by_ids([eggs_id])[0]["quantity"] == 1
+
+
+def test_accept_recipe_keeps_used_items_intact_after_acceptance():
+    manager = _make_manager()
+    eggs_id = run(manager.async_add_item("Oeufs", 6, "piece", "2026-01-01"))
+    recipe = {
+        "title": "Omelette",
+        "used_items": [{"item_id": eggs_id, "quantity": 2, "unit": "piece"}],
+    }
+    registered = _register_and_capture(manager, [recipe])
+    call = MagicMock()
+    call.data = {ATTR_RECIPE_INDEX: 0}
+
+    run(registered[SERVICE_ACCEPT_RECIPE](call))
+
+    assert recipe["accepted"] is True
+    assert recipe["used_items"] == [{"item_id": eggs_id, "quantity": 2, "unit": "piece"}]
+
+    try:
+        run(registered[SERVICE_ACCEPT_RECIPE](call))
+        assert False, "second acceptance should have raised HomeAssistantError"
+    except HomeAssistantError:
+        pass
