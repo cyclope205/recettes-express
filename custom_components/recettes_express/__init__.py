@@ -68,22 +68,33 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def _valid_iso_date(value):
-    """Valide une date AAAA-MM-JJ et la retourne inchangee.
+    """Valide une date AAAA-MM-JJ stricte et la retourne inchangee.
 
     Rejette toute chaine qui n'est pas une date calendaire reelle. Avant
     ce correctif, cv.string laissait passer n'importe quelle chaine, ce
     qui permettait une injection HTML dans la carte et des dates
     impossibles (ex: 2026-99-99) qui echappaient au filtre de peremption
     base sur une comparaison de chaines.
+
+    date.fromisoformat() accepte, depuis Python 3.11, bien plus que le
+    format AAAA-MM-JJ (ex: "20261016" sans tirets, ou une date de semaine
+    ISO "2026-W42-5"). Une telle valeur, conservee telle quelle, romprait
+    le tri/filtre de peremption qui compare les dates comme de simples
+    chaines. On exige donc que isoformat() de la date analysee soit
+    identique a la chaine recue, pour garantir la forme canonique.
     """
     if not isinstance(value, str):
         raise vol.Invalid("La date doit etre une chaine de caracteres")
     try:
-        date.fromisoformat(value)
+        parsed = date.fromisoformat(value)
     except ValueError as err:
         raise vol.Invalid(
             f"Date invalide (format attendu AAAA-MM-JJ): {value}"
         ) from err
+    if parsed.isoformat() != value:
+        raise vol.Invalid(
+            f"Date invalide (format attendu AAAA-MM-JJ): {value}"
+        )
     return value
 
 PLATFORMS: list[Platform] = [Platform.SENSOR]
