@@ -281,6 +281,7 @@ class RecettesExpressCard extends HTMLElement {
         quantity: item.quantity ?? 1,
         unit: item.unit || "piece",
         expiration_date: item.expiration_date || "",
+        expiration_source: item.expiration_source || "",
       }));
       this._pendingItems = this._pendingItems.concat(detectedItems);
     } catch (err) {
@@ -380,6 +381,7 @@ class RecettesExpressCard extends HTMLElement {
         quantity: item.quantity ?? 1,
         unit: item.unit || "piece",
         expiration_date: item.expiration_date || "",
+        expiration_source: item.expiration_source || "",
       }));
       this._pendingItems = this._pendingItems.concat(detectedItems);
     } catch (err) {
@@ -406,6 +408,7 @@ class RecettesExpressCard extends HTMLElement {
         quantity: parseFloat(item.quantity) || 1,
         unit: item.unit,
         expiration_date: item.expiration_date,
+        expiration_source: item.expiration_source,
       });
       this._pendingItems.splice(index, 1);
       this._error = null;
@@ -890,7 +893,7 @@ return result;
 
   _renderExpiringBanner(expiringItems) {
     if (!expiringItems || expiringItems.length === 0) return "";
-    const names = expiringItems.map((i) => i.name).join(", ");
+    const names = expiringItems.map((i) => this._escapeHtml(i.name)).join(", ");
     const n = expiringItems.length;
     return `
       <button class="expiring-banner" id="select-expiring-btn" title="Cliquer pour selectionner ces aliments">
@@ -1658,7 +1661,7 @@ return result;
           ${this._renderRecipes()}
           ${
             this._error
-              ? `<div class="error-banner"><span>${this._error}</span><button id="dismiss-error">✕</button></div>`
+              ? `<div class="error-banner"><span>${this._escapeHtml(this._error)}</span><button id="dismiss-error">✕</button></div>`
               : ""
           }
           ${this._renderExpiringBanner(expiringItems)}
