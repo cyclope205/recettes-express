@@ -36,6 +36,7 @@ from .const import (
     ATTR_CAMERA_ENTITY_ID,
     ATTR_CATEGORY,
     ATTR_EXPIRATION_DATE,
+    ATTR_EXPIRATION_SOURCE,
     ATTR_IMAGE_BASE64,
     ATTR_IMAGE_PATH,
     ATTR_ITEM_ID,
@@ -117,6 +118,7 @@ ADD_ITEM_SCHEMA = vol.Schema(
         vol.Required(ATTR_UNIT): vol.In(UNITS),
         vol.Required(ATTR_EXPIRATION_DATE): _valid_iso_date,
         vol.Optional(ATTR_CATEGORY): vol.In(CATEGORIES),
+        vol.Optional(ATTR_EXPIRATION_SOURCE): vol.In(["printed", "estimated"]),
     }
 )
 
@@ -206,7 +208,7 @@ async def _async_register_frontend_card(hass: HomeAssistant) -> None:
         return
 
     www_path = Path(__file__).parent / "www"
-    if not www_path.is_dir():
+    if not await hass.async_add_executor_job(www_path.is_dir):
         _LOGGER.warning(
             "Dossier 'www' introuvable (%s) : la carte Lovelace ne sera pas "
             "servie automatiquement.",
@@ -391,6 +393,7 @@ def _async_register_services(hass: HomeAssistant, entry: ConfigEntry) -> None:
             unit=call.data[ATTR_UNIT],
             expiration_date=call.data[ATTR_EXPIRATION_DATE],
             category=call.data.get(ATTR_CATEGORY),
+            expiration_source=call.data.get(ATTR_EXPIRATION_SOURCE),
         )
 
     async def handle_remove_item(call: ServiceCall) -> None:
