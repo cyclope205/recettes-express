@@ -139,6 +139,7 @@ class StockManager:
         unit: str,
         expiration_date: str,
         category: str | None = None,
+        expiration_source: str | None = None,
     ) -> str:
         """Ajoute un aliment au stock et retourne son identifiant.
 
@@ -160,6 +161,7 @@ class StockManager:
             "quantity": quantity,
             "unit": unit,
             "expiration_date": expiration_date,
+            "expiration_source": expiration_source,
             "added_at": datetime.now().isoformat(),
             "category": category,
         }
