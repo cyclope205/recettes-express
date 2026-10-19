@@ -20,7 +20,7 @@ add_item:
       required: true
       selector:
         select:
-          options: ["g", "kg", "ml", "l", "piece", "boite", "paquet"]
+          options: ["g", "kg", "cl", "l", "piece", "boite", "paquet"]
     expiration_date:
       name: Date de peremption
       description: Obligatoire (voir le principe anti-gaspi du projet).
@@ -34,6 +34,13 @@ add_item:
       selector:
         select:
           options: ["fruits_legumes", "viandes_poissons", "produits_laitiers", "boissons", "epicerie", "autres"]
+    expiration_source:
+      name: Source de la date
+      description: Indique si la date vient de l'emballage ou d'une estimation. Laisse vide si inconnu.
+      required: false
+      selector:
+        select:
+          options: ["printed", "estimated"]
 
 
 remove_item:
@@ -73,7 +80,7 @@ update_item:
       required: false
       selector:
         select:
-          options: ["g", "kg", "ml", "l", "piece", "boite", "paquet"]
+          options: ["g", "kg", "cl", "l", "piece", "boite", "paquet"]
     expiration_date:
       name: Date de peremption
       required: false
