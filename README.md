@@ -28,7 +28,7 @@
 ---
 
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-cyclope205-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://bmc-eight-red.vercel.app/api/donate?repo=recettes-express) [![PayPal](https://img.shields.io/badge/PayPal-Donate-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://bmc-eight-red.vercel.app/api/paypal?repo=recettes-express&amount=5)
-<img src="custom_components/recettes_express/brand/icon.png" alt="Recettes Express" width="32">
+<img src="https://raw.githubusercontent.com/cyclope205/recettes-express/main/custom_components/recettes_express/brand/icon.png" alt="Recettes Express" width="32">
 
 Intégration Home Assistant pour gérer le stock d'aliments (frigo, garde-manger) et obtenir des suggestions de recettes anti-gaspi générées par IA (Gemini), avec déduction automatique du stock.
 
@@ -40,12 +40,12 @@ Intégration Home Assistant pour gérer le stock d'aliments (frigo, garde-manger
 
 Vue d'ensemble : bloc d'actions (photo, ajout manuel) et recettes suggérées juste sous l'entête, aliments à suivre en dessous :
 
-<img width="460" alt="Recettes Express - accueil" src="screenshots/84f87155-FullSizeRender.jpeg" />
+<img width="460" alt="Recettes Express - accueil" src="https://raw.githubusercontent.com/cyclope205/recettes-express/main/screenshots/84f87155-FullSizeRender.jpeg" />
 
 ---
 Suggestions de recettes générées par IA, affichées directement sous le bloc d'actions :
 
-<img width="415" alt="Recettes Express - suggestion de recette" src="screenshots/51bc5666-IMG_8191.png" />
+<img width="415" alt="Recettes Express - suggestion de recette" src="https://raw.githubusercontent.com/cyclope205/recettes-express/main/screenshots/51bc5666-IMG_8191.png" />
 
 ## Fonctionnalités
 
@@ -73,8 +73,8 @@ Quelques conseils pour une détection fiable :
 
 Exemples de photos correctement cadrées (nom du produit et DLC lisibles) :
 
-<img width="300" alt="Exemple de photo : nom du produit et DLC visibles (jambon)" src="screenshots/33474e6e-photo.jpeg" />
-<img width="300" alt="Exemple de photo : nom du produit et DLC visibles (saucisse de Morteau)" src="screenshots/bb5cc721-photo.jpeg" />
+<img width="300" alt="Exemple de photo : nom du produit et DLC visibles (jambon)" src="https://raw.githubusercontent.com/cyclope205/recettes-express/main/screenshots/33474e6e-photo.jpeg" />
+<img width="300" alt="Exemple de photo : nom du produit et DLC visibles (saucisse de Morteau)" src="https://raw.githubusercontent.com/cyclope205/recettes-express/main/screenshots/bb5cc721-photo.jpeg" />
 
 Sans ces informations visibles sur la photo, l'IA peut se tromper sur le nom de l'aliment ou ne pas détecter de date, ce qui oblige à compléter les champs manquants à la main.
 
