@@ -46,7 +46,7 @@ Reponds UNIQUEMENT avec un JSON valide (pas de texte autour, pas de markdown), a
      "category": "une valeur parmi fruits_legumes, viandes_poissons, produits_laitiers, boissons, epicerie, autres"}}
   ]
 }}
-Les unites valides sont: g, kg, ml, l, piece, boite, paquet. Si tu ne peux pas estimer
+Les unites valides sont: g, kg, cl, l, piece, boite, paquet. Si tu ne peux pas estimer
 la quantite, mets 1 avec l'unite "piece". Pour la categorie, choisis la plus
 appropriee dans la liste ci-dessus ; utilise "autres" si aucune ne convient clairement."""
 
