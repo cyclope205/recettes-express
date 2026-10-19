@@ -109,7 +109,11 @@ Comme pour la photo, l'IA (Gemini) analyse l'enregistrement et propose les alime
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=cyclope205&repository=recettes-express&category=integration)
 
-3. Installer "Recettes Express" depuis HACS
+Une fois le dépôt ajouté et l'intégration installée, vous pouvez aussi l'ajouter directement :
+
+[![Open your Home Assistant instance and show the add integration dialog with a specific integration pre-selected.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=recettes_express)
+
+3. Installer "Recettes Express" depuis HACS (ou cliquez sur le bouton ci-dessus une fois l'intégration installée)
 4. Redemarrer Home Assistant
 
 ### Manuelle
