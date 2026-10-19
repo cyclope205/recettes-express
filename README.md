@@ -105,7 +105,7 @@ Comme pour la photo, l'IA (Gemini) analyse l'enregistrement et propose les alime
 ### Via HACS (recommandé)
 
 1. HACS > menu (...) > Dépôts personnalisés
-2. Ajouter `cyclope205/recettes-express` en catégorie Integration
+2. Ajouter `cyclope205/recettes-express` en catégorie Integration (ou cliquez sur le bouton ci-dessous)
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=cyclope205&repository=recettes-express&category=integration)
 
