@@ -30,6 +30,12 @@
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-cyclope205-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://bmc-eight-red.vercel.app/api/donate?repo=recettes-express) [![PayPal](https://img.shields.io/badge/PayPal-Donate-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://bmc-eight-red.vercel.app/api/paypal?repo=recettes-express&amount=5)
 <img src="https://raw.githubusercontent.com/cyclope205/recettes-express/main/custom_components/recettes_express/brand/icon.png" alt="Recettes Express" width="32">
 
+### ☕ Offrez-moi un café pour m'aider à rester éveillé (et coder vos applications préférées)
+
+En remerciement, votre nom apparaîtra (de façon anonymisée) dans la section « ☕ Merci aux donateurs » ci-dessus.
+
+---
+
 Intégration Home Assistant pour gérer le stock d'aliments (frigo, garde-manger) et obtenir des suggestions de recettes anti-gaspi générées par IA (Gemini), avec déduction automatique du stock.
 
 
