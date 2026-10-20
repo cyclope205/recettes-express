@@ -119,6 +119,20 @@ Comme pour la photo, l'IA (Gemini) analyse l'enregistrement et propose les alime
 
 Copier le dossier `custom_components/recettes_express` dans le dossier `custom_components` de votre configuration Home Assistant, puis redémarrer.
 
+## Ajouter la carte au tableau de bord
+
+Une fois l'intégration installée, la carte doit être ajoutée manuellement à votre tableau de bord :
+
+1. Ouvrez le tableau de bord concerné et cliquez sur le crayon en haut à droite pour passer en mode édition.
+2. Cliquez sur "+ Ajouter une carte" en bas de l'écran.
+3. Dans la barre de recherche, tapez "Recettes Express" : la carte apparaît dans la liste, cliquez dessus puis sur "Enregistrer".
+
+Alternative en YAML (onglet "Modifier en YAML" de la fenêtre d'ajout de carte) :
+
+```yaml
+type: custom:recettes-express-card
+```
+
 ## Configuration
 
 L'intégration se configure via l'interface (Paramètres > Appareils et services > Ajouter une intégration > Recettes Express). Elle nécessite une clé API Gemini pour la reconnaissance photo et les suggestions de recettes.
