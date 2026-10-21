@@ -408,7 +408,7 @@ class RecettesExpressCard extends HTMLElement {
         quantity: parseFloat(item.quantity) || 1,
         unit: item.unit,
         expiration_date: item.expiration_date,
-        expiration_source: item.expiration_source,
+        expiration_source: (item.expiration_source === "printed" || item.expiration_source === "estimated") ? item.expiration_source : undefined,
       });
       this._pendingItems.splice(index, 1);
       this._error = null;
@@ -760,6 +760,7 @@ return result;
     : `<span class="badge ${this._expiryBadgeClass(item.expiration_date)}">${this._escapeHtml(item.expiration_date)}</span>`
     : ""
     }
+    ${item.expiration_source ? `<span class="badge badge-source" title="${item.expiration_source === 'printed' ? "Date lue sur l'emballage" : "Date estimee par l'IA"}">${item.expiration_source === 'printed' ? "📷" : "🤖"}</span>` : ""}
     <button class="icon-btn edit-item-btn" data-item-id="${item.id}" title="Modifier">✏️</button>
     <button class="icon-btn remove-item-btn" data-item-id="${item.id}" data-item-name="${this._escapeHtml(item.name)}" title="Retirer">✕</button>
     </div>
@@ -864,6 +865,7 @@ return result;
               required
               title="DLC (obligatoire)"
             />
+            ${item.expiration_source ? `<span class="badge badge-source" title="${item.expiration_source === 'printed' ? "Date lue sur l'emballage" : "Date estimee par l'IA"}">${item.expiration_source === 'printed' ? "📷" : "🤖"}</span>` : ""}
             <select class="pending-quick-date" data-index="${i}" title="Estimer rapidement (produit frais sans date imprimee)">
               <option value="">≈ estimer…</option>
               <option value="3">+ 3 jours</option>
@@ -1871,6 +1873,7 @@ return result;
     root.querySelectorAll(".pending-exp").forEach((el) =>
       el.addEventListener("input", (e) => {
         this._updatePendingField(+e.target.dataset.index, "expiration_date", e.target.value);
+        this._updatePendingField(+e.target.dataset.index, "expiration_source", null);
         e.target.classList.toggle("field-missing", !e.target.value);
         clearTimeout(e.target._dlcBlurTimer);
         e.target._dlcBlurTimer = setTimeout(() => e.target.blur(), 600);
@@ -1881,6 +1884,7 @@ return result;
         if (e.target.value) {
           const computed = this._addDaysISO(e.target.value);
           this._updatePendingField(+e.target.dataset.index, "expiration_date", computed);
+          this._updatePendingField(+e.target.dataset.index, "expiration_source", "estimated");
           const dateEl = root.querySelector(`.pending-exp[data-index="${e.target.dataset.index}"]`);
           if (dateEl) {
             dateEl.value = computed;
