@@ -90,6 +90,7 @@ class StockManager:
                 "unit": unit,
                 "expiration_date": expiration_date,
                 "added_at": item.get("added_at"),
+                "expiration_source": item.get("expiration_source") if item.get("expiration_source") in ("printed", "estimated") else None,
                 "category": category,
             }
 
