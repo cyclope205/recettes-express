@@ -1,6 +1,6 @@
 # Recettes Express
 
-[![HACS: Custom](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
+[![HACS: Default](https://img.shields.io/badge/HACS-Default-orange.svg)](https://github.com/hacs/integration)
 [![Release](https://img.shields.io/github/v/release/cyclope205/recettes-express)](https://github.com/cyclope205/recettes-express/releases)
 [![Build](https://github.com/cyclope205/recettes-express/actions/workflows/validate.yml/badge.svg)](https://github.com/cyclope205/recettes-express/actions/workflows/validate.yml)
 [![Tests](https://github.com/cyclope205/recettes-express/actions/workflows/tests.yml/badge.svg)](https://github.com/cyclope205/recettes-express/actions/workflows/tests.yml)
@@ -111,17 +111,20 @@ Comme pour la photo, l'IA (Gemini) analyse l'enregistrement et propose les alime
 
 ### Via HACS (recommandé)
 
-1. HACS > menu (...) > Dépôts personnalisés
-2. Ajouter `cyclope205/recettes-express` en catégorie Integration (ou cliquez sur le bouton ci-dessous)
+## Installation
 
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=cyclope205&repository=recettes-express&category=integration)
+1. Ouvrir Recettes Express dans HACS et l'installer :
 
-3. Installer "Recettes Express" depuis HACS
-4. Redémarrer Home Assistant
-5. Ajouter l'intégration : **Paramètres > Appareils et services > Ajouter une intégration > Recettes Express** (ou cliquez sur le bouton ci-dessous une fois l'intégration installée et Home Assistant redémarré)
+   [![Ouvrir HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=cyclope205&repository=recettes-express&category=integration)
 
-[![Open your Home Assistant instance and show the add integration dialog with a specific integration pre-selected.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=recettes_express)
+   ou rechercher **Recettes Express** dans HACS.
+2. Télécharger la dernière version de Recettes Express.
+3. Redémarrer Home Assistant.
+4. Ajouter l'intégration :
 
+   [![Ajouter l'intégration](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=recettes_express)
+
+   ou **Paramètres > Appareils et services > Ajouter une intégration > Recettes Express**.
 ### Manuelle
 
 Copier le dossier `custom_components/recettes_express` dans le dossier `custom_components` de votre configuration Home Assistant, puis redémarrer.
