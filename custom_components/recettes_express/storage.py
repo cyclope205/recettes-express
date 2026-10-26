@@ -197,6 +197,10 @@ class StockManager:
             item["unit"] = unit
         if expiration_date is not None:
             item["expiration_date"] = expiration_date
+            # La date a ete modifiee manuellement : la provenance precedente
+            # ("imprimee" ou "estimee" par l'IA) ne correspond plus a la
+            # nouvelle valeur, on l'efface pour ne pas afficher un badge mensonger.
+            item["expiration_source"] = None
         if category is not None and is_valid_category(category):
             item["category"] = category
         await self._async_save()
