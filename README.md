@@ -5,7 +5,7 @@
 [![Build](https://github.com/cyclope205/recettes-express/actions/workflows/validate.yml/badge.svg)](https://github.com/cyclope205/recettes-express/actions/workflows/validate.yml)
 [![Tests](https://github.com/cyclope205/recettes-express/actions/workflows/tests.yml/badge.svg)](https://github.com/cyclope205/recettes-express/actions/workflows/tests.yml)
 [![Issues](https://img.shields.io/github/issues/cyclope205/recettes-express)](https://github.com/cyclope205/recettes-express/issues)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/cyclope205/recettes-express/blob/main/LICENSE)
 [![Downloads](https://img.shields.io/github/downloads/cyclope205/recettes-express/total)](https://github.com/cyclope205/recettes-express/releases)
 [![Downloads latest](https://img.shields.io/github/downloads/cyclope205/recettes-express/latest/total)](https://github.com/cyclope205/recettes-express/releases/latest)
 [![Stars](https://img.shields.io/github/stars/cyclope205/recettes-express)](https://github.com/cyclope205/recettes-express/stargazers)
@@ -167,4 +167,4 @@ entity_expiring: sensor.bientot_perime
 
 ## Licence
 
-MIT — voir [LICENSE](LICENSE).
+MIT — voir [LICENSE](https://github.com/cyclope205/recettes-express/blob/main/LICENSE).
