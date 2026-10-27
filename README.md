@@ -116,11 +116,12 @@ Comme pour la photo, l'IA (Gemini) analyse l'enregistrement et propose les alime
 1. Ouvrir Recettes Express dans HACS et l'installer :
 
    [![Ouvrir HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=cyclope205&repository=recettes-express&category=integration)
+   [![Ouvrir dans Marketplace](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=cyclope205&repository=recettes-express&category=integration)
 
    ou rechercher **Recettes Express** dans HACS.
-2. Télécharger la dernière version de Recettes Express.
-3. Redémarrer Home Assistant.
-4. Ajouter l'intégration :
+3. Télécharger la dernière version de Recettes Express.
+4. Redémarrer Home Assistant.
+5. Ajouter l'intégration :
 
    [![Ajouter l'intégration](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=recettes_express)
 
