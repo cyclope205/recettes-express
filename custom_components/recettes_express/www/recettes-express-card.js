@@ -30,6 +30,7 @@ class RecettesExpressCard extends HTMLElement {
       ...config,
     };
     this._pendingItems = [];
+    this._pendingIdSeq = 0;
     this._recipes = [];
     this._loading = null;
     this._error = null;
@@ -282,6 +283,7 @@ class RecettesExpressCard extends HTMLElement {
         unit: item.unit || "piece",
         expiration_date: item.expiration_date || "",
         expiration_source: item.expiration_source || "",
+        _pid: ++this._pendingIdSeq,
       }));
       this._pendingItems = this._pendingItems.concat(detectedItems);
     } catch (err) {
@@ -382,6 +384,7 @@ class RecettesExpressCard extends HTMLElement {
         unit: item.unit || "piece",
         expiration_date: item.expiration_date || "",
         expiration_source: item.expiration_source || "",
+        _pid: ++this._pendingIdSeq,
       }));
       this._pendingItems = this._pendingItems.concat(detectedItems);
     } catch (err) {
@@ -392,7 +395,9 @@ class RecettesExpressCard extends HTMLElement {
     }
   }
 
-  async _confirmPendingItem(index) {
+  async _confirmPendingItem(pid) {
+    const index = this._pendingItems.findIndex((it) => it._pid === pid);
+    if (index === -1) return;
     const item = this._pendingItems[index];
     if (!item.name || !item.name.trim()) {
       this._setError("Le nom de l'aliment est vide.");
@@ -410,7 +415,8 @@ class RecettesExpressCard extends HTMLElement {
         expiration_date: item.expiration_date,
         expiration_source: (item.expiration_source === "printed" || item.expiration_source === "estimated") ? item.expiration_source : undefined,
       });
-      this._pendingItems.splice(index, 1);
+const currentIndex = this._pendingItems.findIndex((it) => it._pid === pid);
+      if (currentIndex !== -1) this._pendingItems.splice(currentIndex, 1);
       this._error = null;
       this._render();
     } catch (err) {
@@ -418,13 +424,16 @@ class RecettesExpressCard extends HTMLElement {
     }
   }
 
-  _discardPendingItem(index) {
+    _discardPendingItem(pid) {
+      const index = this._pendingItems.findIndex((it) => it._pid === pid);
+      if (index === -1) return;
     this._pendingItems.splice(index, 1);
     this._render();
   }
 
-  _updatePendingField(index, field, value) {
-    this._pendingItems[index][field] = value;
+    _updatePendingField(pid, field, value) {
+      const item = this._pendingItems.find((it) => it._pid === pid);
+      if (item) item[field] = value;
   }
 
   async _removeItem(itemId, itemName) {
@@ -519,7 +528,7 @@ class RecettesExpressCard extends HTMLElement {
       }
       recipe._accepted = true;
       recipe._removedCount = removedCount;
-      this._recipes = this._recipes.filter((r) => r === recipe);
+      
       this._selectedItemIds.clear();
       this._error = null;
       this._render();
@@ -849,10 +858,10 @@ return result;
         const missingDate = !item.expiration_date;
         return `
         <div class="pending-row">
-          <input type="text" class="pending-name" data-index="${i}" value="${this._escapeHtml(item.name)}" placeholder="Nom de l'aliment" />
+          <input type="text" class="pending-name" data-pid="${item._pid}" value="${this._escapeHtml(item.name)}" placeholder="Nom de l'aliment" />
           <div class="pending-row-line2">
-            <input type="number" step="0.1" class="pending-qty" data-index="${i}" value="${this._escapeHtml(item.quantity)}" />
-            <select class="pending-unit" data-index="${i}">
+            <input type="number" step="0.1" class="pending-qty" data-pid="${item._pid}" value="${this._escapeHtml(item.quantity)}" />
+            <select class="pending-unit" data-pid="${item._pid}">
               ${["g", "kg", "cl", "l", "piece", "boite", "paquet"]
                 .map((u) => `<option value="${u}" ${u === item.unit ? "selected" : ""}>${u}</option>`)
                 .join("")}
@@ -860,13 +869,13 @@ return result;
             <input
               type="date"
               class="pending-exp ${missingDate ? "field-missing" : ""}"
-              data-index="${i}"
+              data-pid="${item._pid}"
               value="${this._escapeHtml(item.expiration_date)}"
               required
               title="DLC (obligatoire)"
             />
             ${item.expiration_source ? `<span class="badge badge-source" title="${item.expiration_source === 'printed' ? "Date lue sur l'emballage" : "Date estimee par l'IA"}">${item.expiration_source === 'printed' ? "📷" : "🤖"}</span>` : ""}
-            <select class="pending-quick-date" data-index="${i}" title="Estimer rapidement (produit frais sans date imprimee)">
+            <select class="pending-quick-date" data-pid="${item._pid}" title="Estimer rapidement (produit frais sans date imprimee)">
               <option value="">≈ estimer…</option>
               <option value="3">+ 3 jours</option>
               <option value="7">+ 1 semaine</option>
@@ -876,10 +885,10 @@ return result;
             <div class="pending-actions">
               <button
                 class="confirm-btn ${missingDate ? "confirm-btn-disabled" : ""}"
-                data-index="${i}"
+                data-pid="${item._pid}"
                 title="${missingDate ? "Renseignez la DLC avant d'ajouter" : "Ajouter au stock"}"
               >✓</button>
-              <button class="discard-btn" data-index="${i}" title="Ignorer">✕</button>
+              <button class="discard-btn" data-pid="${item._pid}" title="Ignorer">✕</button>
             </div>
           </div>
         </div>`;
@@ -927,7 +936,7 @@ return result;
         return `
         <div class="recipe-card ${recipe._accepted ? "recipe-card-done" : ""}">
           <div class="recipe-hero" style="background: linear-gradient(135deg, ${c1}, ${c2});">
-            <button class="dismiss-recipe-btn" data-index="${i}" title="Ignorer cette recette" aria-label="Ignorer cette recette">&times;</button>
+          <button class="dismiss-recipe-btn" data-index="${i}" title="Ignorer cette recette" aria-label="Ignorer cette recette">&times;</button>
             <span class="recipe-hero-emoji">${emoji}</span>
             <div class="recipe-hero-text">
               <div class="recipe-title">${this._escapeHtml(recipe.title)}</div>
@@ -1862,18 +1871,18 @@ return result;
     }
 
     root.querySelectorAll(".pending-name").forEach((el) =>
-      el.addEventListener("input", (e) => this._updatePendingField(+e.target.dataset.index, "name", e.target.value))
+      el.addEventListener("input", (e) => this._updatePendingField(+e.target.dataset.pid, "name", e.target.value))
     );
     root.querySelectorAll(".pending-qty").forEach((el) =>
-      el.addEventListener("input", (e) => this._updatePendingField(+e.target.dataset.index, "quantity", e.target.value))
+      el.addEventListener("input", (e) => this._updatePendingField(+e.target.dataset.pid, "quantity", e.target.value))
     );
     root.querySelectorAll(".pending-unit").forEach((el) =>
-      el.addEventListener("change", (e) => this._updatePendingField(+e.target.dataset.index, "unit", e.target.value))
+      el.addEventListener("change", (e) => this._updatePendingField(+e.target.dataset.pid, "unit", e.target.value))
     );
     root.querySelectorAll(".pending-exp").forEach((el) =>
       el.addEventListener("input", (e) => {
-        this._updatePendingField(+e.target.dataset.index, "expiration_date", e.target.value);
-        this._updatePendingField(+e.target.dataset.index, "expiration_source", null);
+        this._updatePendingField(+e.target.dataset.pid, "expiration_date", e.target.value);
+        this._updatePendingField(+e.target.dataset.pid, "expiration_source", null);
         e.target.classList.toggle("field-missing", !e.target.value);
         clearTimeout(e.target._dlcBlurTimer);
         e.target._dlcBlurTimer = setTimeout(() => e.target.blur(), 600);
@@ -1883,9 +1892,9 @@ return result;
       el.addEventListener("change", (e) => {
         if (e.target.value) {
           const computed = this._addDaysISO(e.target.value);
-          this._updatePendingField(+e.target.dataset.index, "expiration_date", computed);
-          this._updatePendingField(+e.target.dataset.index, "expiration_source", "estimated");
-          const dateEl = root.querySelector(`.pending-exp[data-index="${e.target.dataset.index}"]`);
+          this._updatePendingField(+e.target.dataset.pid, "expiration_date", computed);
+          this._updatePendingField(+e.target.dataset.pid, "expiration_source", "estimated");
+          const dateEl = root.querySelector(`.pending-exp[data-pid="${e.target.dataset.pid}"]`);
           if (dateEl) {
             dateEl.value = computed;
             dateEl.classList.remove("field-missing");
@@ -1895,13 +1904,13 @@ return result;
       })
     );
     root.querySelectorAll(".confirm-btn").forEach((btn) =>
-      btn.addEventListener("click", (e) => this._confirmPendingItem(+e.currentTarget.dataset.index))
+      btn.addEventListener("click", (e) => this._confirmPendingItem(+e.currentTarget.dataset.pid))
     );
     root.querySelectorAll(".dismiss-recipe-btn").forEach((btn) =>
       btn.addEventListener("click", (e) => this._dismissRecipe(+e.currentTarget.dataset.index))
     );
     root.querySelectorAll(".discard-btn").forEach((btn) =>
-      btn.addEventListener("click", (e) => this._discardPendingItem(+e.currentTarget.dataset.index))
+      btn.addEventListener("click", (e) => this._discardPendingItem(+e.currentTarget.dataset.pid))
     );
     root.querySelectorAll(".accept-recipe-btn").forEach((btn) =>
       btn.addEventListener("click", (e) => this._acceptRecipe(+e.currentTarget.dataset.index))
