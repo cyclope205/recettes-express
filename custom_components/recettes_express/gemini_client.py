@@ -357,7 +357,7 @@ class GeminiClient:
     async def _generate(
         self, model: str, parts: list[dict[str, Any]], thinking_level: str = "low"
     ) -> str:
-                url = f"{GEMINI_API_BASE}/{model}:generateContent"
+        url = f"{GEMINI_API_BASE}/{model}:generateContent"
         payload = {
             "contents": [{"parts": parts}],
             "generationConfig": {
