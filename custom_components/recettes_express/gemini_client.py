@@ -357,7 +357,7 @@ class GeminiClient:
     async def _generate(
         self, model: str, parts: list[dict[str, Any]], thinking_level: str = "low"
     ) -> str:
-        url = f"{GEMINI_API_BASE}/{model}:generateContent?key={self._api_key}"
+                url = f"{GEMINI_API_BASE}/{model}:generateContent"
         payload = {
             "contents": [{"parts": parts}],
             "generationConfig": {
@@ -367,11 +367,11 @@ class GeminiClient:
                 "thinkingConfig": {"thinkingLevel": thinking_level},
             },
         }
-
+        headers = {"x-goog-api-key": self._api_key}
         max_attempts = 3
         for attempt in range(1, max_attempts + 1):
             try:
-                async with self._session.post(url, json=payload) as resp:
+                async with self._session.post(url, json=payload, headers=headers) as resp:
                     if resp.status == 429:
                         retry_delay = None
                         try:
